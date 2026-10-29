@@ -6,7 +6,9 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:matriculas": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/pages/matriculas/matriculas.spec.ts --ts-config=tsconfig.matriculas.spec.json",
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadless"
   },
   "prettier": {
     "printWidth": 100,

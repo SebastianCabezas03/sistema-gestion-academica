@@ -38,9 +38,8 @@
     <div class="stat-icon purple">♧</div>
     <div class="stat-info">
       <span>Total de docentes</span>
-      <p class="stat-value">{{ totalDocentes }}</p>
-      <p class="stat-description">Docentes Registrados</p>
-      <small>Módulo pendiente</small>
+      <strong class="stat-value">{{ cargandoDocentes ? '...' : (totalDocentes ?? '—') }}</strong>
+      <small>{{ cargandoDocentes ? 'Cargando...' : (totalDocentes === null ? 'No se pudo cargar' : 'Docentes registrados') }}</small>
     </div>
   </article>
 
@@ -48,9 +47,8 @@
     <div class="stat-icon green">▤</div>
     <div class="stat-info">
       <span>Total de cursos</span>
-      <p class="stat-value">{{ totalCursos }}</p>
-      <p class="stat-description">Cursos Registrados</p>
-      <small>Módulo pendiente</small>
+      <strong class="stat-value">{{ cargandoCursos ? '...' : (totalCursos ?? '—') }}</strong>
+      <small>{{ cargandoCursos ? 'Cargando...' : (totalCursos === null ? 'No se pudo cargar' : 'Cursos registrados') }}</small>
     </div>
   </article>
 
@@ -58,8 +56,8 @@
     <div class="stat-icon orange">▣</div>
     <div class="stat-info">
       <span>Total de matrículas</span>
-      <strong class="stat-value">—</strong>
-      <small>Módulo pendiente</small>
+      <strong class="stat-value">{{ cargandoMatriculas ? '...' : (totalMatriculas ?? '—') }}</strong>
+      <small>{{ cargandoMatriculas ? 'Cargando...' : (totalMatriculas === null ? 'No se pudo cargar' : 'Incluye activas y canceladas') }}</small>
     </div>
   </article>
 </section>
@@ -124,7 +122,7 @@
   <div class="welcome-icon">✦</div>
   <div>
     <h2>Tu gestión académica, en un solo lugar</h2>
-    <p>Comienza administrando los registros de alumnos y continúa incorporando los demás módulos.</p>
+    <p>Administra alumnos, docentes, cursos y matrículas desde sus módulos.</p>
     <a routerLink="/alumnos">Ir a gestión de alumnos →</a>
   </div>
 </div>
@@ -142,24 +140,24 @@
     <span class="card-link">Abrir módulo →</span>
   </a>
 
-  <div class="quick-card upcoming">
+  <a class="quick-card" routerLink="/cursos">
     <span class="quick-icon green">▤</span>
     <strong>Cursos</strong>
     <small>Organización de la oferta académica.</small>
-    <span class="coming-soon">Próximamente</span>
-  </div>
+    <span class="card-link">Abrir módulo →</span>
+  </a>
 
-  <div class="quick-card upcoming">
+  <a class="quick-card" routerLink="/docentes">
     <span class="quick-icon purple">♧</span>
     <strong>Docentes</strong>
     <small>Gestión de información docente.</small>
-    <span class="coming-soon">Próximamente</span>
-  </div>
+    <span class="card-link">Abrir módulo →</span>
+  </a>
 
-  <div class="quick-card upcoming">
+  <a class="quick-card" routerLink="/matriculas">
     <span class="quick-icon orange">▣</span>
     <strong>Matrículas</strong>
     <small>Seguimiento de matrículas académicas.</small>
-    <span class="coming-soon">Próximamente</span>
-  </div>
+    <span class="card-link">Abrir módulo →</span>
+  </a>
 </div>

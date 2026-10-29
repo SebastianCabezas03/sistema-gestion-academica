@@ -5,6 +5,7 @@ import { Alumnos } from './pages/alumnos/alumnos';
 import { Docentes } from './pages/docentes/docentes';
 import { CursosComponent } from './pages/admin/cursos/cursos';
 import { Login } from './pages/login/login';
+import { Matriculas } from './pages/matriculas/matriculas';
 import { authGuard } from './guards/auth-guard';
 
 export const routes: Routes = [
@@ -42,7 +43,8 @@ export const routes: Routes = [
       {
         path: 'cursos',
         component: CursosComponent
-      }
+      },
+      { path: 'matriculas', component: Matriculas }
     ]
   },
   {

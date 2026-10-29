@@ -13,4 +13,3 @@ public interface AlumnoRepository extends JpaRepository<Alumno, Long> {
 
     boolean existsByTelefonoAndIdNot(String telefono, Long id);
 }
-

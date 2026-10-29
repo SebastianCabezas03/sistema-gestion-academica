@@ -1,0 +1,1 @@
+{"extends":"./tsconfig.spec.json","include":["src/app/pages/matriculas/matriculas.spec.ts"]}

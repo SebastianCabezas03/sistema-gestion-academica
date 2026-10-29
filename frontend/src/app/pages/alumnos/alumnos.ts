@@ -181,4 +181,3 @@ confirmarEliminacion(): void {
     this.error = '';
   }
 }
-

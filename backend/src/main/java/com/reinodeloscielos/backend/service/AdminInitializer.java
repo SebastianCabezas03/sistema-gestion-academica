@@ -19,10 +19,15 @@ public class AdminInitializer {
             String username = "admin";
 
             if (!usuarioRepository.existsByUsername(username)) {
+            String password = System.getenv("ADMIN_PASSWORD");
+            if (password == null || password.isBlank()) {
+                System.err.println("No se creó el administrador: configura ADMIN_PASSWORD y reinicia.");
+                return;
+            }
             Usuario admin = new Usuario();
             admin.setUsername(username);
             admin.setPassword(
-                passwordEncoder.encode(System.getenv("ADMIN_PASSWORD"))
+                passwordEncoder.encode(password)
             );
             admin.setRol("ADMIN");
 

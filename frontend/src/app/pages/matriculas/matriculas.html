@@ -1,0 +1,64 @@
+<section class="matriculas">
+  <header><div><h1>Matrículas</h1><p>Inscribe alumnos en cursos y administra sus inscripciones.</p></div>
+    <button type="button" (click)="nueva()" [disabled]="cargando || guardando || !disponible || !alumnos.length || !cursos.length">Nueva matrícula</button>
+  </header>
+  @if (error) { <div class="error" role="alert">{{ error }}</div> }
+  @if (mensaje) { <div class="exito" role="status">{{ mensaje }}</div> }
+  @if (!cargando && !disponible) { <button type="button" (click)="cargar()">Reintentar</button> }
+  @if (!cargando && disponible && (!alumnos.length || !cursos.length)) {
+    <p class="aviso">Para matricular necesitas <a routerLink="/alumnos">alumnos</a> y <a routerLink="/cursos">cursos</a> registrados.</p>
+  }
+  @if (mostrarFormulario) {
+    <form #form="ngForm" (ngSubmit)="guardar()" class="panel">
+      <h2>{{ idEditando === null ? 'Registrar matrícula' : 'Editar matrícula' }}</h2>
+      <fieldset [disabled]="guardando || cargando || !disponible">
+        <label for="alumno">Alumno</label>
+        <select id="alumno" name="alumno" [(ngModel)]="alumnoId" (ngModelChange)="cursosIds = []" required>
+          <option [ngValue]="null">Selecciona un alumno</option>
+          @for (a of alumnos; track a.id) { <option [ngValue]="a.id">{{ a.nombres }} {{ a.apellidos }} (ID {{ a.id }})</option> }
+        </select>
+        @if (idEditando === null) {
+          <fieldset class="cursos"><legend>Cursos</legend>
+            <p>Selecciona uno o varios. Una matrícula cancelada se reactiva desde Editar.</p>
+            @for (c of cursos; track c.id) {
+              <label class="opcion"><input type="checkbox" [checked]="cursosIds.includes(c.id)"
+                [disabled]="!alumnoId || yaMatriculado(c.id)" (change)="seleccionarCurso(c.id, $any($event.target).checked)">
+                {{ c.nombre }} @if (yaMatriculado(c.id)) { <small>Ya tiene matrícula</small> }
+              </label>
+            }
+          </fieldset>
+        } @else {
+          <label for="curso">Curso</label>
+          <select id="curso" name="curso" [(ngModel)]="cursoId" required>
+            @for (c of cursos; track c.id) { <option [ngValue]="c.id">{{ c.nombre }}</option> }
+          </select>
+          <label for="estado">Estado</label>
+          <select id="estado" name="estado" [(ngModel)]="estado" required>
+            <option value="ACTIVA">Activa</option><option value="CANCELADA">Cancelada</option>
+          </select>
+        }
+        <label for="fecha">Fecha de matrícula</label>
+        <input id="fecha" name="fecha" type="date" [(ngModel)]="fecha" [max]="hoy" required>
+        <div class="acciones"><button type="submit" [disabled]="form.invalid || (idEditando === null && !cursosIds.length)">{{ guardando ? 'Guardando…' : 'Guardar matrícula' }}</button>
+          <button type="button" class="secundario" (click)="mostrarFormulario = false">Cerrar</button></div>
+      </fieldset>
+    </form>
+  }
+  <div class="filtros">
+    <label>Buscar alumno o curso<input type="search" [(ngModel)]="busqueda" placeholder="Nombre del alumno o curso"></label>
+    <label>Estado<select [(ngModel)]="filtroEstado"><option value="">Todos</option><option value="ACTIVA">Activas</option><option value="CANCELADA">Canceladas</option></select></label>
+  </div>
+  @if (cargando) { <p role="status">Cargando matrículas…</p> }
+  @else if (disponible) {
+    <div class="tabla"><table><caption>{{ filtradas.length }} matrícula(s)</caption>
+      <thead><tr><th>Alumno</th><th>Curso</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>@for (m of filtradas; track m.id) {
+        <tr><td>{{ m.nombreAlumno }}</td><td>{{ m.nombreCurso }}</td><td>{{ m.fecha | date:'dd/MM/yyyy' }}</td>
+          <td><span class="estado" [class.cancelada]="m.estado === 'CANCELADA'">{{ m.estado === 'ACTIVA' ? 'Activa' : 'Cancelada' }}</span></td>
+          <td><div class="acciones"><button type="button" class="secundario" (click)="editar(m)" [disabled]="guardando">Editar</button>
+            @if (m.estado === 'ACTIVA') { <button type="button" class="peligro" (click)="cancelar(m)" [disabled]="guardando">Cancelar matrícula</button> }</div></td>
+        </tr>
+      } @empty { <tr><td colspan="5">No hay matrículas para mostrar.</td></tr> }</tbody>
+    </table></div>
+  }
+</section>
