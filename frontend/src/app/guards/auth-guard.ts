@@ -7,7 +7,9 @@ export const authGuard: CanActivateFn = () => {
   const usuario = sessionStorage.getItem('usuario');
   const rol = sessionStorage.getItem('rol');
 
-  if (usuario && rol === 'ADMIN') {
+  const rolesPermitidos = ['ADMIN', 'DOCENTE', 'ALUMNO'];
+
+  if (usuario && rol && rolesPermitidos.includes(rol)) {
     return true;
   }
 

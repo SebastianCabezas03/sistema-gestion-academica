@@ -1,0 +1,78 @@
+
+<section class="perfil-page">
+  <header class="perfil-header">
+    <div>
+      <span class="eyebrow">CUENTA PERSONAL</span>
+      <h1>Mi perfil</h1>
+      <p>Consulta tu información registrada en el sistema académico.</p>
+    </div>
+
+    <div class="perfil-avatar">♙</div>
+  </header>
+
+  <div *ngIf="cargando" class="estado">
+    Cargando información de tu perfil...
+  </div>
+
+  <div *ngIf="error" class="alerta-error">
+    {{ error }}
+  </div>
+
+  <article *ngIf="perfil && !cargando" class="perfil-card">
+    <div class="perfil-identidad">
+      <div class="avatar-grande">
+        {{ perfil.nombres?.charAt(0) || perfil.username.charAt(0) }}
+      </div>
+
+      <div>
+        <h2>
+          {{ perfil.nombres || perfil.username }}
+          {{ perfil.apellidos || '' }}
+        </h2>
+        <span class="rol-badge">{{ perfil.rol }}</span>
+      </div>
+    </div>
+
+    <div class="datos-grid">
+      <div class="dato">
+        <span>Nombre de usuario</span>
+        <strong>{{ perfil.username }}</strong>
+      </div>
+
+      <div class="dato">
+        <span>Tipo de cuenta</span>
+        <strong>{{ perfil.rol }}</strong>
+      </div>
+
+      <div class="dato">
+        <span>Nombres</span>
+        <strong>{{ perfil.nombres || 'No registrado' }}</strong>
+      </div>
+
+      <div class="dato">
+        <span>Apellidos</span>
+        <strong>{{ perfil.apellidos || 'No registrados' }}</strong>
+      </div>
+
+      <div class="dato">
+        <span>Correo electrónico</span>
+        <strong>{{ perfil.correo || 'No registrado' }}</strong>
+      </div>
+
+      <div class="dato">
+        <span>Teléfono</span>
+        <strong>{{ perfil.telefono || 'No registrado' }}</strong>
+      </div>
+
+      <div class="dato" *ngIf="perfil.rol === 'DOCENTE'">
+        <span>Especialidad</span>
+        <strong>{{ perfil.especialidad || 'No registrada' }}</strong>
+      </div>
+
+      <div class="dato" *ngIf="perfil.personaId">
+        <span>Código de registro</span>
+        <strong>{{ perfil.personaId }}</strong>
+      </div>
+    </div>
+  </article>
+</section>

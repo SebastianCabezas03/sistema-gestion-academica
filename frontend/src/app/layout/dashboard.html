@@ -11,14 +11,17 @@
     <div class="menu-label">MENÚ PRINCIPAL</div>
 
     <nav class="navigation">
-      <a routerLink="/inicio"
+      <a *ngIf="rol === 'ADMIN'"
+        routerLink="/inicio"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }">
         <span class="nav-icon">⌂</span>
         Inicio
       </a>
 
-      <a routerLink="/alumnos" routerLinkActive="active">
+      <a *ngIf="rol === 'ADMIN'"
+        routerLink="/alumnos"
+        routerLinkActive="active">
         <span class="nav-icon">♙</span>
         Alumnos
       </a>
@@ -28,24 +31,44 @@
         Cursos
       </a>
 
-      <a routerLink="/docentes" routerLinkActive="active">
+      <a *ngIf="rol === 'ADMIN'"
+        routerLink="/docentes"
+        routerLinkActive="active">
         <span class="nav-icon">♧</span>
         Docentes
       </a>
 
-      <a routerLink="/matriculas" routerLinkActive="active">
+      <a *ngIf="rol === 'ADMIN'"
+        routerLink="/matriculas"
+        routerLinkActive="active">
         <span class="nav-icon">▣</span>
         Matrículas
+      </a>
+
+      <a *ngIf="rol === 'ADMIN'"
+        routerLink="/cuentas"
+        routerLinkActive="active">
+        <span class="nav-icon">🔐</span>
+        Cuentas
+      </a>
+
+      <a routerLink="/mi-perfil" routerLinkActive="active">
+        <span class="nav-icon">♙</span>
+        Mi perfil
       </a>
     </nav>
 
     <div class="sidebar-footer">
-      <div class="profile-avatar">AD</div>
+      <div class="profile-avatar">{{ iniciales }}</div>
       <div>
-        <strong>Administrador</strong>
-        <small>Sistema académico</small>
+        <strong>{{ usuario }}</strong>
+        <small>{{ nombreRol }}</small>
       </div>
     </div>
+
+    <button type="button" class="btn-logout" (click)="cerrarSesion()">
+      Cerrar sesión
+    </button>
   </aside>
 
   <main class="main-area">
@@ -55,14 +78,15 @@
         type="button"
         (click)="toggleMenu()"
         [attr.aria-expanded]="!menuCollapsed"
-        aria-label="Contraer o expandir el menú"
-        >
-      ☰
+        aria-label="Contraer o expandir el menú">
+        ☰
       </button>
+
       <div>
         <span class="topbar-label">PLATAFORMA ACADÉMICA</span>
-        <strong>Panel de administración</strong>
+        <strong>{{ nombreRol }}</strong>
       </div>
+
       <div class="status">
         <span class="status-dot"></span>
         Sistema activo

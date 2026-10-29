@@ -19,6 +19,14 @@ public class Usuario {
     @Column(nullable = false, length = 20)
     private String rol;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "alumno_id", unique = true)
+    private Alumno alumno;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "docente_id", unique = true)
+    private Docente docente;
+
     public Usuario() {
     }
 
@@ -58,5 +66,21 @@ public class Usuario {
 
     public void setRol(String rol) {
         this.rol = rol;
+    }
+
+    public Alumno getAlumno() {
+        return alumno;
+    }
+
+    public void setAlumno(Alumno alumno) {
+        this.alumno = alumno;
+    }
+
+    public Docente getDocente() {
+        return docente;
+    }
+
+    public void setDocente(Docente docente) {
+        this.docente = docente;
     }
 }

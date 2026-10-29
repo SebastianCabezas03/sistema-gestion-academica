@@ -34,7 +34,12 @@ export class Login {
 
     this.cargando = true;
 
-    this.http.post<{ username: string; mensaje: string; rol: string }>(
+    this.http.post<{
+      username: string;
+      mensaje: string;
+      rol: string;
+      token: string;
+    }>(
       this.apiUrl,
       {
         username: this.username.trim(),
@@ -44,15 +49,25 @@ export class Login {
       next: (respuesta) => {
         this.cargando = false;
 
-        if (respuesta.rol !== 'ADMIN') {
-          this.error = 'Este usuario no tiene permisos de administrador.';
+        if (!['ADMIN', 'DOCENTE', 'ALUMNO'].includes(respuesta.rol)) {
+          this.error = 'Usuario o contraseña incorrectos.';
+          return;
+        }
+
+        if (!respuesta.token) {
+          this.error = 'El servidor no devolvió el token de autenticación.';
           return;
         }
 
         sessionStorage.setItem('usuario', respuesta.username);
         sessionStorage.setItem('rol', respuesta.rol);
+        sessionStorage.setItem('token', respuesta.token);
 
-        this.router.navigate(['/inicio']);
+        if (respuesta.rol === 'ADMIN') {
+          this.router.navigate(['/inicio']);
+        } else {
+          this.router.navigate(['/mi-perfil']);
+        }
       },
       error: (err) => {
         this.cargando = false;

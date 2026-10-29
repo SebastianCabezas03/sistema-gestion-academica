@@ -2,6 +2,7 @@ package com.reinodeloscielos.backend.controller;
 
 import com.reinodeloscielos.backend.entity.Usuario;
 import com.reinodeloscielos.backend.repository.UsuarioRepository;
+import com.reinodeloscielos.backend.service.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,12 +19,15 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final UsuarioRepository usuarioRepository;
+    private final JwtService jwtService;
 
     public AuthController(
             AuthenticationManager authenticationManager,
-            UsuarioRepository usuarioRepository) {
+            UsuarioRepository usuarioRepository,
+            JwtService jwtService) {
         this.authenticationManager = authenticationManager;
         this.usuarioRepository = usuarioRepository;
+        this.jwtService = jwtService;
     }
 
     @PostMapping("/login")
@@ -40,10 +44,16 @@ public class AuthController {
                     .findByUsername(authentication.getName())
                     .orElseThrow();
 
+            String token = jwtService.generarToken(
+                    usuario.getUsername(),
+                    usuario.getRol()
+            );
+
             return ResponseEntity.ok(Map.of(
                     "mensaje", "Inicio de sesión correcto",
                     "username", usuario.getUsername(),
-                    "rol", usuario.getRol()
+                    "rol", usuario.getRol(),
+                    "token", token
             ));
 
         } catch (Exception e) {

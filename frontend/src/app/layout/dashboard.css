@@ -442,3 +442,117 @@ a.quick-card:focus-visible,
   }
 }
 
+/* Botón para cerrar sesión */
+.btn-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: calc(100% - 28px);
+  margin: 12px 14px 20px;
+  padding: 11px 14px;
+
+  background: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-logout:hover {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #fecaca;
+}
+
+.btn-logout:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+
+/* Perfil del usuario en el sidebar */
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 12px 10px;
+  padding: 16px 4px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sidebar-footer > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.sidebar-footer strong {
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.sidebar-footer small {
+  color: #a8bad7;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+}
+
+.profile-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #93c5fd, #c4b5fd);
+  color: #172554;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+}
+
+/* Botón de cierre de sesión */
+.btn-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: calc(100% - 24px);
+  margin: 8px 12px 18px;
+  padding: 12px;
+  border: 1px solid rgba(248, 113, 113, 0.22);
+  border-radius: 12px;
+  background: rgba(248, 113, 113, 0.07);
+  color: #fecaca;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.btn-logout::before {
+  content: "↪";
+  font-size: 18px;
+  line-height: 1;
+}
+
+.btn-logout:hover {
+  background: #dc4545;
+  border-color: #dc4545;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(220, 69, 69, 0.2);
+}
+
+.btn-logout:active {
+  transform: translateY(0);
+}
