@@ -78,6 +78,12 @@
         Registrar asistencia
       </a>
 
+      <a *ngIf="rol === 'DOCENTE' || rol === 'ALUMNO'"
+        routerLink="/calificaciones" routerLinkActive="active">
+        <span class="nav-icon"><i class="bi bi-journal-check"></i></span>
+        {{ rol === 'DOCENTE' ? 'Calificaciones' : 'Mis notas' }}
+      </a>
+
       <a routerLink="/mi-perfil" routerLinkActive="active">
         <span class="nav-icon"><i class="bi bi-person-circle"></i></span>
         Mi perfil

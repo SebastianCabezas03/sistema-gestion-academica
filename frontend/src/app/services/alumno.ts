@@ -16,7 +16,7 @@ export interface Alumno {
 })
 export class AlumnoService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/alumnos';
+  private readonly apiUrl = '/api/alumnos';
 
   listar(): Observable<Alumno[]> {
     return this.http.get<Alumno[]>(this.apiUrl);

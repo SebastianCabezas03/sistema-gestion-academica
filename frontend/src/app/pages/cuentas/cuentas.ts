@@ -113,7 +113,7 @@ export class Cuentas implements OnInit {
     this.guardando = true;
 
     this.http.post<RespuestaCuenta>(
-      'http://localhost:8080/api/cuentas',
+      '/api/cuentas',
       datos
     ).subscribe({
       next: (respuesta) => {

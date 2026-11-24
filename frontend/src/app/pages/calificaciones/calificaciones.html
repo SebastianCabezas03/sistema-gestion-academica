@@ -1,0 +1,54 @@
+<section class="panel">
+  <h1>{{ rol === 'ALUMNO' ? 'Mis notas' : 'Calificaciones' }}</h1>
+
+  @if (rol === 'DOCENTE') {
+    <label for="curso-notas">Curso</label>
+    <select id="curso-notas" [ngModel]="cursoId" (ngModelChange)="seleccionarCurso($event)"
+      [disabled]="cargando() || guardando() !== null">
+      <option [ngValue]="null">Selecciona un curso</option>
+      @for (curso of cursos(); track curso.id) {
+        <option [ngValue]="curso.id">{{ curso.nombreCurso }}</option>
+      }
+    </select>
+
+    @if (alumnos().length) {
+      <p>Ingresa la nota final de 0 a 20. Puedes usar hasta dos decimales.</p>
+      @for (fila of alumnos(); track fila.matriculaId) {
+        <form class="fila" #formulario="ngForm" (ngSubmit)="guardar(fila, nota.value)">
+          <label [for]="'nota-' + fila.matriculaId">{{ fila.alumno }}</label>
+          <input [id]="'nota-' + fila.matriculaId" name="nota" type="number"
+            [ngModel]="fila.nota" #nota="ngModel" required min="0" max="20" step="0.01"
+            [disabled]="guardando() !== null" />
+          <button type="submit" [disabled]="formulario.invalid || guardando() !== null">
+            {{ guardando() === fila.matriculaId ? 'Guardando…' : 'Guardar' }}
+          </button>
+        </form>
+      }
+    } @else if (!cargando() && !error()) {
+      @if (cursoId !== null) {
+        <p>Este curso no tiene matrículas activas.</p>
+      } @else if (!cursos().length) {
+        <p>No tienes cursos asignados.</p>
+      }
+    }
+  } @else if (rol === 'ALUMNO') {
+    @if (notas().length) {
+      <table>
+        <thead><tr><th scope="col">Curso</th><th scope="col">Nota final</th></tr></thead>
+        <tbody>
+          @for (fila of notas(); track fila.matriculaId) {
+            <tr><td>{{ fila.curso }}</td><td>{{ fila.nota ?? 'Pendiente' }}</td></tr>
+          }
+        </tbody>
+      </table>
+    } @else if (!cargando() && !error()) {
+      <p>No tienes matrículas activas.</p>
+    }
+  } @else {
+    <p>Esta sección está disponible para docentes y alumnos.</p>
+  }
+
+  @if (cargando()) { <p role="status">Cargando…</p> }
+  @if (mensaje()) { <p role="status">{{ mensaje() }}</p> }
+  @if (error()) { <p role="alert">{{ error() }}</p> }
+</section>

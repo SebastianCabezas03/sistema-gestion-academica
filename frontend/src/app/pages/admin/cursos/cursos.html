@@ -1,3 +1,4 @@
+@if (errorCursos) { <p role="alert">{{ errorCursos }}</p> }
 <div class="courses-page">
 
   <header class="page-heading">
@@ -8,9 +9,9 @@
 
       <div>
         <span class="eyebrow">PLATAFORMA ACADÉMICA</span>
-        <h1>{{ rol === 'ALUMNO' ? 'Mis Cursos' : 'Gestión de Cursos' }}</h1>
+        <h1>{{ rol !== 'ADMIN' ? 'Mis Cursos' : 'Gestión de Cursos' }}</h1>
 
-        <p>{{ rol === 'ALUMNO' ? 'Consulta los cursos en los que estás inscrito.' : 'Administra los cursos y sus docentes responsables.' }}</p>
+        <p>{{ rol === 'ALUMNO' ? 'Consulta los cursos en los que estás inscrito.' : rol === 'DOCENTE' ? 'Consulta los cursos que tienes asignados.' : 'Administra los cursos y sus docentes responsables.' }}</p>
       </div>
     </div>
 
@@ -161,7 +162,7 @@
               <th class="id-column">ID</th>
               <th>Nombre del curso</th>
               <th>Docente responsable</th>
-              @if (rol === 'ADMINN') {
+              @if (rol === 'ADMIN') {
                 <th class="actions-column">Acciones</th>
               }
             </tr>
@@ -184,7 +185,7 @@
                 </td>
 
                 <td>
-                  @if (rol === 'ALUMNO'){
+                  @if (rol !== 'ADMIN'){
                     <span class="teacher-name">
                       <i class="bi bi-person-circle"></i>
                       {{ curso.nombreDocente ||'Docente no asignado' }}

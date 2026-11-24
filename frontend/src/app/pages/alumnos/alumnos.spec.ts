@@ -8,7 +8,7 @@ describe('Listado de alumnos', () => {
     const http = TestBed.inject(HttpTestingController);
     let cantidad = -1;
     TestBed.inject(AlumnoService).listar().subscribe(datos => cantidad = datos.length);
-    const req = http.expectOne('http://localhost:8080/api/alumnos');
+    const req = http.expectOne('/api/alumnos');
     expect(req.request.method).toBe('GET');
     req.flush([{id: 1, nombres: 'Ana', apellidos: 'Prueba'}]);
     expect(cantidad).toBe(1);

@@ -16,7 +16,7 @@ export interface Docente {
 })
 export class DocenteService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/docentes';
+  private readonly apiUrl = '/api/docentes';
 
   listar(): Observable<Docente[]> {
     return this.http.get<Docente[]>(this.apiUrl);

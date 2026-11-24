@@ -2,6 +2,8 @@ package com.reinodeloscielos.backend.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(
@@ -37,6 +39,7 @@ public class Asistencia {
     private LocalDate fecha;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, length = 15)
     private Estado estado;
 

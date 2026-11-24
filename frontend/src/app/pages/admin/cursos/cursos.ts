@@ -28,6 +28,7 @@ get cursosSinDocente(): number {
   return this.cursos.filter(c => c.idDocente == null).length;
 }
 
+  errorCursos = '';
   cursos: Curso[] = [];
   docentes: any[] = [];
 
@@ -65,7 +66,20 @@ get cursosSinDocente(): number {
     }
 
     if (rol === 'DOCENTE'){
-      console.log('Vista de cursos para docente pendiente');
+      this.http.get<{id: number; nombreCurso: string; nombreDocente: string}[]>(
+        '/api/docente/asistencia/mis-cursos'
+      ).subscribe({
+        next: cursos => {
+          this.cursos = cursos.map(curso => ({
+            id: curso.id,
+            nombre: curso.nombreCurso,
+            idDocente: null,
+            nombreDocente: curso.nombreDocente
+          }));
+          this.cdr.detectChanges();
+        },
+        error: () => { this.errorCursos = 'No se pudieron cargar tus cursos.'; }
+      });
     }
 
   }
@@ -83,7 +97,7 @@ get cursosSinDocente(): number {
   }
 
   cargarMisCursos(): void {
-  this.http.get<any[]>('http://localhost:8080/api/mis-cursos').subscribe({
+  this.http.get<any[]>('/api/mis-cursos').subscribe({
     next: (data) => {
       this.cursos = data.map(curso => ({
         id: curso.id,

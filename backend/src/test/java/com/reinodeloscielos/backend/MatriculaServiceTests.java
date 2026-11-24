@@ -7,6 +7,7 @@ import com.reinodeloscielos.backend.service.MatriculaService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -72,8 +73,23 @@ class MatriculaServiceTests {
 
     @Test void permiteReactivarLaMismaMatricula() {
         Matricula m = existente(); m.setEstado(Matricula.Estado.CANCELADA);
+        m.setNota(new BigDecimal("16.50"));
         var dto = new MatriculaUpdateDto(1L, 2L, LocalDate.now(), Matricula.Estado.ACTIVA);
         assertEquals(Matricula.Estado.ACTIVA, service.actualizar(4L, dto).estado());
+        assertEquals(new BigDecimal("16.50"), m.getNota());
+    }
+
+    @Test void noTrasladaUnaNotaAOtroCurso() {
+        Matricula matricula = existente();
+        matricula.setNota(new BigDecimal("16.50"));
+        Curso otro = new Curso();
+        otro.setId(3L);
+        when(cursos.findById(3L)).thenReturn(Optional.of(otro));
+        var dto = new MatriculaUpdateDto(1L, 3L, LocalDate.now(), Matricula.Estado.ACTIVA);
+        var error = assertThrows(ResponseStatusException.class, () -> service.actualizar(4L, dto));
+        assertEquals(409, error.getStatusCode().value());
+        assertSame(curso, matricula.getCurso());
+        verify(matriculas, never()).saveAndFlush(any());
     }
 
     @Test void editarNoPuedeDuplicarOtraMatricula() {

@@ -24,7 +24,7 @@ export interface RegistrarAsistencia {
 })
 export class AsistenciaService {
 
-  private apiUrl = 'http://localhost:8080/api/asistencias';
+  private apiUrl = '/api/asistencias';
 
   constructor(private http: HttpClient) {}
 
@@ -49,13 +49,13 @@ export class AsistenciaService {
 
   obtenerMisCursos() {
   return this.http.get<any[]>(
-    'http://localhost:8080/api/docente/asistencia/mis-cursos'
+    '/api/docente/asistencia/mis-cursos'
   );
 }
 
   obtenerAlumnosDelCurso(cursoId: number) {
   return this.http.get<any[]>(
-    `http://localhost:8080/api/docente/asistencia/curso/${cursoId}/alumnos`
+    `/api/docente/asistencia/curso/${cursoId}/alumnos`
   );
 }
 

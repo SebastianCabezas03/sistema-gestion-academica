@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "matriculas", uniqueConstraints = @UniqueConstraint(
@@ -24,6 +25,8 @@ public class Matricula {
     @Enumerated(EnumType.STRING) @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, length = 10)
     private Estado estado = Estado.ACTIVA;
+    @Column(precision = 4, scale = 2)
+    private BigDecimal nota;
 
     public Long getId() { return id; }
     public Alumno getAlumno() { return alumno; }
@@ -34,4 +37,6 @@ public class Matricula {
     public void setFecha(LocalDate fecha) { this.fecha = fecha; }
     public Estado getEstado() { return estado; }
     public void setEstado(Estado estado) { this.estado = estado; }
+    public BigDecimal getNota() { return nota; }
+    public void setNota(BigDecimal nota) { this.nota = nota; }
 }

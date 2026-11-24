@@ -30,7 +30,7 @@ export class MiPerfil implements OnInit {
 
   ngOnInit(): void {
     this.http.get<PerfilResponse>(
-      'http://localhost:8080/api/perfil/me'
+      '/api/perfil/me'
     ).subscribe({
       next: (respuesta) => {
         this.perfil = respuesta;

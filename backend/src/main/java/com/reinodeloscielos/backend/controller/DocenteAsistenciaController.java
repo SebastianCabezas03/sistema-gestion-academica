@@ -29,15 +29,16 @@ public class DocenteAsistenciaController {
         this.matriculaRepository = matriculaRepository;
     }
 
+    public record CursoAsignado(Long id, String nombreCurso, String nombreDocente) {}
     @GetMapping("/mis-cursos")
     @Transactional(readOnly = true)
-    public List<Curso> misCursos(Authentication authentication) {
+    public List<CursoAsignado> misCursos(Authentication authentication) {
 
         Usuario usuario = obtenerDocente(authentication);
 
         return cursoRepository.findByDocenteIdOrderByNombreCursoAsc(
                 usuario.getDocente().getId()
-        );
+        ).stream().map(c -> new CursoAsignado(c.getId(), c.getNombreCurso(), usuario.getDocente().getNombres() + " " + usuario.getDocente().getApellidos())).toList();
     }
 
     @GetMapping("/curso/{cursoId}/alumnos")

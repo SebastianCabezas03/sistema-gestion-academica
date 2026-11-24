@@ -13,7 +13,8 @@ Apache solo es necesario si se administra mediante phpMyAdmin.
 Desde PowerShell, en backend:
 
 ```powershell
-$env:ADMIN_PASSWORD = Read-Host "Contrasena del administrador inicial"
+$env:ADMIN_PASSWORD = Read-Host "Contraseña del administrador inicial" -MaskInput
+$env:APP_JWT_SECRET = Read-Host "Clave JWT en Base64" -MaskInput
 ./mvnw.cmd spring-boot:run
 ```
 
@@ -21,7 +22,13 @@ La conexion predeterminada es localhost:3306/gestion_academica, usuario root,
 sin contrasena. Si la instalacion es diferente, definir DB_URL, DB_USERNAME y
 DB_PASSWORD antes del arranque. DB_URL debe usar jdbc:mysql://.
 Las variables del proceso tienen prioridad sobre los valores predeterminados.
-No publicar contrasenas. Spring Boot no carga archivos .env automaticamente.
+Spring Boot no carga archivos .env automáticamente. APP_JWT_SECRET es obligatoria
+y debe contener al menos 32 bytes aleatorios codificados en Base64. En PowerShell 7
+puedes generar una clave con el siguiente comando y guardarla fuera del repositorio.
+
+```powershell
+[Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+```
 
 ADMIN_PASSWORD crea admin si no existe; no cambia la clave de una cuenta existente.
 Si no existe admin y falta la variable, se informa y no se crea la cuenta.
@@ -39,9 +46,10 @@ Usar InnoDB y referencias BIGINT con signo para las claves foraneas.
 CREATE TABLE IF NOT EXISTS no convierte tablas ni migra esquemas existentes.
 Respaldar una base con informacion antes de cualquier cambio de estructura.
 
-Los scripts corresponden a las entidades actuales: usuarios, alumnos, docente,
-curso y matriculas. Los diagramas del informe pueden incluir funciones propuestas
-que aun no estan implementadas. Los datos de prueba no se incluyen en el repositorio.
+El script completo incluye cuentas vinculadas a alumnos y docentes, cursos,
+matrículas con nota y asistencias. Para actualizar una base existente, respáldala
+y verifica el arranque con DB_DDL_AUTO=update sobre una copia antes de aplicarlo
+a la base que usas.
 
 ## Comportamiento
 
@@ -57,13 +65,28 @@ Frontend: npm run build y npm run test:ci (Chrome instalado).
 Backend: ./mvnw.cmd test o ./mvnw.cmd package, con base de pruebas y variables
 de conexion configuradas. Estas pruebas no deben ejecutarse sobre datos del equipo.
 
-## Autorizacion pendiente
+## Acceso y calificaciones
 
-El login verifica credenciales, pero la API conserva permitAll del principal.
-El guard solo protege navegacion. Completar autorizacion del backend antes de
-un despliegue publico; esta integracion no implementa JWT ni sesiones autenticadas.
+El inicio de sesión devuelve un JWT. En **Calificaciones**, el docente elige
+un curso asignado y registra o corrige la nota final de cada matrícula activa.
+La escala va de 0 a 20 y admite hasta dos decimales. En **Mis notas**, el alumno
+ve sus calificaciones y las pendientes. Una matrícula cancelada conserva su nota,
+que vuelve a mostrarse al reactivarla. Si la matrícula ya tiene nota, conserva
+también su alumno y su curso.
 
-## Resultado de la comprobacion de MySQL
+Para verificar el flujo, vincula las cuentas de docente y alumno, asigna el curso
+al docente y matricula al alumno. Guarda una nota como docente y comprueba el
+resultado como alumno. Verifica que otro docente carezca de acceso a ese curso
+y que se rechacen notas fuera de rango.
+
+## Publicación
+
+Angular usa rutas relativas bajo `/api`. En desarrollo, `npm start`
+reenvía estas solicitudes al backend local con `proxy.conf.json`. En producción,
+sirve Angular y `/api` bajo el mismo origen. Configura el servidor para reenviar
+`/api` al backend y servir `index.html` en las rutas de Angular.
+
+## Comprobación histórica de MySQL
 
 Validado el 28 de octubre de 2026 con MySQL Connector/J y MariaDB 10.4.32
 portatil, la version indicada en el SQL original del equipo. No se instalo XAMPP

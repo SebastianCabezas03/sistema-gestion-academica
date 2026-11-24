@@ -20,13 +20,15 @@ public class AsistenciaController {
     private final AsistenciaRepository asistenciaRepository;
     private final UsuarioRepository usuarioRepository;
     private final AlumnoRepository alumnoRepository;
+    private final MatriculaRepository matriculas;
     private final CursoRepository cursoRepository;
 
     public AsistenciaController(
             AsistenciaRepository asistenciaRepository,
             UsuarioRepository usuarioRepository,
             AlumnoRepository alumnoRepository,
-            CursoRepository cursoRepository) {
+            CursoRepository cursoRepository, MatriculaRepository matriculas) {
+        this.matriculas = matriculas;
         this.asistenciaRepository = asistenciaRepository;
         this.usuarioRepository = usuarioRepository;
         this.alumnoRepository = alumnoRepository;
@@ -123,7 +125,7 @@ public class AsistenciaController {
     @PostMapping("/registrar")
     @Transactional
     public AsistenciaResponse registrar(
-        @RequestBody RegistrarAsistenciaRequest request,
+        @jakarta.validation.Valid @RequestBody RegistrarAsistenciaRequest request,
         Authentication authentication) {
 
         Usuario usuario = obtenerUsuario(authentication);
@@ -147,6 +149,10 @@ public class AsistenciaController {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Alumno no encontrado"));
 
+        if (!matriculas.existsByAlumnoIdAndCursoIdAndEstado(alumno.getId(), curso.getId(), Matricula.Estado.ACTIVA)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El alumno requiere matrícula activa en este curso.");
+        }
+
         if (!asistenciaRepository.existsByAlumnoIdAndCursoIdAndFecha(
                 alumno.getId(), curso.getId(), request.fecha())) {
 
@@ -165,9 +171,9 @@ public class AsistenciaController {
         }
 
     public record RegistrarAsistenciaRequest(
-        Long alumnoId,
-        Long cursoId,
-        LocalDate fecha,
-        Asistencia.Estado estado
+        @jakarta.validation.constraints.NotNull Long alumnoId,
+        @jakarta.validation.constraints.NotNull Long cursoId,
+        @jakarta.validation.constraints.NotNull LocalDate fecha,
+        @jakarta.validation.constraints.NotNull Asistencia.Estado estado
     ) {}
 }

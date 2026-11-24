@@ -1,0 +1,40 @@
+.panel {
+  max-width: 52rem;
+  padding: 1.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+}
+
+select, input, button {
+  padding: .5rem .75rem;
+  border: 1px solid #94a3b8;
+  border-radius: .4rem;
+  font: inherit;
+}
+
+select { margin-inline-start: .75rem; }
+
+.fila {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) 6rem auto;
+  gap: .75rem;
+  align-items: center;
+  padding-block: .5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+button {
+  background: #1e3a8a;
+  color: white;
+}
+
+button:disabled { opacity: .55; }
+table { width: 100%; border-collapse: collapse; }
+td, th { text-align: left; padding: .65rem; border-bottom: 1px solid #e2e8f0; }
+
+@media (max-width: 460px) {
+  .fila { grid-template-columns: 1fr 1fr; }
+  .fila label { grid-column: 1 / -1; }
+  select { display: block; margin: .5rem 0; max-width: 100%; }
+}

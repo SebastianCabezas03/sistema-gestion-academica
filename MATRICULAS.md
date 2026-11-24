@@ -33,6 +33,10 @@ No se implementan periodos académicos ni pagos en este alcance.
 La cancelación es idempotente. Las claves foráneas impiden borrar alumnos o cursos
 con matrículas; cancelar no elimina esa relación ni su historial.
 
+El docente puede registrar una nota final de 0 a 20 para una matrícula activa
+de un curso asignado. Si la matrícula ya tiene nota, se conserva el alumno y el
+curso al editarla. La nota vuelve a mostrarse cuando se reactiva la matrícula.
+
 ## Comprobaciones
 
 - Registrar dos cursos y comprobar que aparecen dos filas y aumenta el contador.

@@ -32,6 +32,7 @@ export class Dashboard {
   cerrarSesion(): void {
     sessionStorage.removeItem('usuario');
     sessionStorage.removeItem('rol');
+    sessionStorage.removeItem('token');
     this.router.navigate(['/login']);
   }
 

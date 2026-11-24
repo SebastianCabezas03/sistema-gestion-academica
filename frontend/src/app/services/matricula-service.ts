@@ -17,7 +17,7 @@ export interface MatriculaEdicion { alumnoId: number; cursoId: number; fecha: st
 @Injectable({ providedIn: 'root' })
 export class MatriculaService {
   private readonly http = inject(HttpClient);
-  private readonly url = 'http://localhost:8080/api/matriculas';
+  private readonly url = '/api/matriculas';
   listar() { return this.http.get<Matricula[]>(this.url); }
   registrar(dto: MatriculaRegistro) { return this.http.post<Matricula[]>(this.url, dto); }
   actualizar(id: number, dto: MatriculaEdicion) { return this.http.put<Matricula>(`${this.url}/${id}`, dto); }

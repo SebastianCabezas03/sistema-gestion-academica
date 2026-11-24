@@ -57,6 +57,12 @@ public class MatriculaService {
         if (matriculas.existsByAlumnoIdAndCursoIdAndIdNot(dto.alumnoId(), dto.cursoId(), id)) {
             throw duplicada();
         }
+        if (matricula.getNota() != null &&
+                (!matricula.getAlumno().getId().equals(dto.alumnoId()) ||
+                 !matricula.getCurso().getId().equals(dto.cursoId()))) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "No se puede cambiar el alumno o el curso de una matrícula que ya tiene nota.");
+        }
         matricula.setAlumno(alumno);
         matricula.setCurso(curso);
         matricula.setFecha(dto.fecha());

@@ -7,9 +7,11 @@ CREATE TABLE IF NOT EXISTS matriculas (
     curso_id BIGINT NOT NULL,
     fecha DATE NOT NULL,
     estado VARCHAR(10) NOT NULL DEFAULT 'ACTIVA',
+    nota DECIMAL(4,2),
     PRIMARY KEY (id),
     CONSTRAINT uk_matricula_alumno_curso UNIQUE (alumno_id, curso_id),
     CONSTRAINT fk_matricula_alumno FOREIGN KEY (alumno_id) REFERENCES alumnos(id),
     CONSTRAINT fk_matricula_curso FOREIGN KEY (curso_id) REFERENCES curso(id),
-    CONSTRAINT ck_matricula_estado CHECK (estado IN ('ACTIVA', 'CANCELADA'))
+    CONSTRAINT ck_matricula_estado CHECK (estado IN ('ACTIVA', 'CANCELADA')),
+    CONSTRAINT ck_matricula_nota CHECK (nota BETWEEN 0 AND 20)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

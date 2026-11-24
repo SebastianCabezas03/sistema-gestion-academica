@@ -2,12 +2,6 @@
 -- Seleccionar primero gestion_academica en phpMyAdmin o la consola.
 -- No contiene cuentas, contrasenas ni datos personales.
 -- IF NOT EXISTS no migra tablas ya creadas. Revisarlas antes de importar.
-CREATE TABLE IF NOT EXISTS usuarios (
-    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    rol VARCHAR(20) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS alumnos (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nombres VARCHAR(100) NOT NULL,
@@ -25,15 +19,38 @@ CREATE TABLE IF NOT EXISTS curso (
     nombre_curso VARCHAR(255), docente_id BIGINT,
     CONSTRAINT fk_curso_docente FOREIGN KEY (docente_id) REFERENCES docente(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS usuarios (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    rol VARCHAR(20) NOT NULL,
+    alumno_id BIGINT UNIQUE,
+    docente_id BIGINT UNIQUE,
+    CONSTRAINT fk_usuario_alumno FOREIGN KEY (alumno_id) REFERENCES alumnos(id),
+    CONSTRAINT fk_usuario_docente FOREIGN KEY (docente_id) REFERENCES docente(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE IF NOT EXISTS matriculas (
     id BIGINT NOT NULL AUTO_INCREMENT,
     alumno_id BIGINT NOT NULL,
     curso_id BIGINT NOT NULL,
     fecha DATE NOT NULL,
     estado VARCHAR(10) NOT NULL DEFAULT 'ACTIVA',
+    nota DECIMAL(4,2),
     PRIMARY KEY (id),
     CONSTRAINT uk_matricula_alumno_curso UNIQUE (alumno_id, curso_id),
     CONSTRAINT fk_matricula_alumno FOREIGN KEY (alumno_id) REFERENCES alumnos(id),
     CONSTRAINT fk_matricula_curso FOREIGN KEY (curso_id) REFERENCES curso(id),
-    CONSTRAINT ck_matricula_estado CHECK (estado IN ('ACTIVA', 'CANCELADA'))
+    CONSTRAINT ck_matricula_estado CHECK (estado IN ('ACTIVA', 'CANCELADA')),
+    CONSTRAINT ck_matricula_nota CHECK (nota BETWEEN 0 AND 20)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS asistencias (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    alumno_id BIGINT NOT NULL,
+    curso_id BIGINT NOT NULL,
+    fecha DATE NOT NULL,
+    estado VARCHAR(15) NOT NULL,
+    CONSTRAINT uk_asistencia_alumno_curso_fecha UNIQUE (alumno_id, curso_id, fecha),
+    CONSTRAINT fk_asistencia_alumno FOREIGN KEY (alumno_id) REFERENCES alumnos(id),
+    CONSTRAINT fk_asistencia_curso FOREIGN KEY (curso_id) REFERENCES curso(id),
+    CONSTRAINT ck_asistencia_estado CHECK (estado IN ('ASISTIO', 'FALTA', 'TARDANZA'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

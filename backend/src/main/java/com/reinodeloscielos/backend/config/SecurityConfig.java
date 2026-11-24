@@ -38,6 +38,7 @@ public class SecurityConfig {
             )
             .authenticationProvider(authenticationProvider)
             .authorizeHttpRequests(auth -> auth
+                .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/login").permitAll()
 
@@ -46,6 +47,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/alumnos/**").hasRole("ADMIN")
                 .requestMatchers("/api/docentes/**").hasRole("ADMIN")
                 .requestMatchers("/api/matriculas/**").hasRole("ADMIN")
+                .requestMatchers("/api/calificaciones/docente/**").hasRole("DOCENTE")
+                .requestMatchers("/api/calificaciones/mis-notas").hasRole("ALUMNO")
 
                 .requestMatchers(HttpMethod.GET, "/api/cursos/**")
                     .hasAnyRole("ADMIN", "DOCENTE", "ALUMNO")

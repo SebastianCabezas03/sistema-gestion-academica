@@ -8,7 +8,7 @@ import { Curso } from '../models/Curso';
 })
 export class CursoService {
 
-  private apiUrl = 'http://localhost:8080/api/cursos';
+  private apiUrl = '/api/cursos';
 
   constructor(private http: HttpClient) {}
 
