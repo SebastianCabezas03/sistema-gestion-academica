@@ -1,8 +1,10 @@
 
+
 package com.reinodeloscielos.backend.service;
 
 import com.reinodeloscielos.backend.entity.Alumno;
 import com.reinodeloscielos.backend.repository.AlumnoRepository;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,6 +30,22 @@ public class AlumnoService {
                         HttpStatus.NOT_FOUND,
                         "Alumno no encontrado"
                 ));
+    }
+
+    // Buscar alumnos por nombres o apellidos
+    public List<Alumno> buscar(String texto) {
+
+        if (texto == null || texto.isBlank()) {
+            return listar();
+        }
+
+        String busqueda = texto.trim();
+
+        return alumnoRepository
+                .findByNombresContainingIgnoreCaseOrApellidosContainingIgnoreCase(
+                        busqueda,
+                        busqueda
+                );
     }
 
     public Alumno crear(Alumno alumno) {
@@ -83,7 +101,6 @@ public class AlumnoService {
         }
     }
 
-
     private void validarTelefonoDuplicado(String telefono, Long idActual) {
         if (telefono == null || telefono.isBlank()) {
             return;
@@ -103,5 +120,4 @@ public class AlumnoService {
             );
         }
     }
-
 }

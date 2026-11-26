@@ -11,33 +11,26 @@ public interface MatriculaRepository extends JpaRepository<Matricula, Long> {
 
     boolean existsByAlumnoIdAndCursoId(Long alumnoId, Long cursoId);
 
-    boolean existsByAlumnoIdAndCursoIdAndIdNot(
-            Long alumnoId,
-            Long cursoId,
-            Long id
-    );
+    boolean existsByAlumnoIdAndCursoIdAndIdNot(Long alumnoId, Long cursoId, Long id);
 
     boolean existsByAlumnoIdAndCursoIdAndEstado(
-            Long alumnoId,
-            Long cursoId,
-            Matricula.Estado estado
-    );
+            Long alumnoId, Long cursoId, Matricula.Estado estado);
 
     @EntityGraph(attributePaths = {"alumno", "curso"})
     List<Matricula> findAllByOrderByIdDesc();
 
     @EntityGraph(attributePaths = {"curso", "curso.docente"})
     List<Matricula> findByAlumnoIdAndEstadoOrderByIdDesc(
-            Long alumnoId,
-            Matricula.Estado estado
-    );
+            Long alumnoId, Matricula.Estado estado);
 
     @EntityGraph(attributePaths = {"alumno", "curso"})
     List<Matricula> findByCursoIdAndEstadoOrderByAlumnoApellidosAsc(
-            Long cursoId,
-            Matricula.Estado estado
-    );
+            Long cursoId, Matricula.Estado estado);
 
     @EntityGraph(attributePaths = {"alumno", "curso"})
     List<Matricula> findByCursoIdOrderByIdDesc(Long cursoId);
+
+    // Historial completo de matrículas de un alumno
+    @EntityGraph(attributePaths = {"alumno", "curso"})
+    List<Matricula> findByAlumnoIdOrderByIdDesc(Long alumnoId);
 }

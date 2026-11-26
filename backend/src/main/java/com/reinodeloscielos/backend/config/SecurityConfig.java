@@ -1,6 +1,8 @@
+
 package com.reinodeloscielos.backend.config;
 
 import com.reinodeloscielos.backend.service.CustomUserDetailsService;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -38,17 +40,26 @@ public class SecurityConfig {
             )
             .authenticationProvider(authenticationProvider)
             .authorizeHttpRequests(auth -> auth
+
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                 .requestMatchers("/api/auth/login").permitAll()
 
                 .requestMatchers("/api/cuentas/**").hasRole("ADMIN")
 
+                // El alumno puede consultar exclusivamente su propio historial
+                .requestMatchers(HttpMethod.GET, "/api/alumnos/mi-historial")
+                    .hasRole("ALUMNO")
+
+                // Los demás endpoints de alumnos son exclusivos del administrador
                 .requestMatchers("/api/alumnos/**").hasRole("ADMIN")
+
                 .requestMatchers("/api/docentes/**").hasRole("ADMIN")
                 .requestMatchers("/api/matriculas/**").hasRole("ADMIN")
 
                 .requestMatchers(HttpMethod.GET, "/api/cursos/**")
                     .hasAnyRole("ADMIN", "DOCENTE", "ALUMNO")
+
                 .requestMatchers("/api/cursos/**").hasRole("ADMIN")
 
                 .anyRequest().authenticated()
@@ -105,6 +116,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration) throws Exception {
+
         return configuration.getAuthenticationManager();
     }
 }
