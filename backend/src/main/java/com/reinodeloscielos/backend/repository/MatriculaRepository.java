@@ -2,6 +2,7 @@
 package com.reinodeloscielos.backend.repository;
 
 import com.reinodeloscielos.backend.entity.Matricula;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -9,9 +10,12 @@ import java.util.List;
 
 public interface MatriculaRepository extends JpaRepository<Matricula, Long> {
 
+    long countByEstado(Matricula.Estado estado);
+
     boolean existsByAlumnoIdAndCursoId(Long alumnoId, Long cursoId);
 
-    boolean existsByAlumnoIdAndCursoIdAndIdNot(Long alumnoId, Long cursoId, Long id);
+    boolean existsByAlumnoIdAndCursoIdAndIdNot(
+            Long alumnoId, Long cursoId, Long id);
 
     boolean existsByAlumnoIdAndCursoIdAndEstado(
             Long alumnoId, Long cursoId, Matricula.Estado estado);

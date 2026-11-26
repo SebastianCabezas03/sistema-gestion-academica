@@ -19,6 +19,7 @@ public class ReporteMatriculaController {
         this.reporteMatriculaService = reporteMatriculaService;
     }
 
+    // Obtener reporte de matrículas por curso
     @GetMapping("/curso/{cursoId}")
     public ReporteMatriculaResponse obtenerReporte(
             @PathVariable Long cursoId,

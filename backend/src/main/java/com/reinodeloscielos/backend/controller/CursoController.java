@@ -4,6 +4,9 @@ package com.reinodeloscielos.backend.controller;
 import com.reinodeloscielos.backend.dto.CursoRequestDto;
 import com.reinodeloscielos.backend.dto.CursoResponseDto;
 import com.reinodeloscielos.backend.service.CursoService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,14 +24,19 @@ public class CursoController {
         this.cursoService = cursoService;
     }
 
+    // Listar todos los cursos
     @GetMapping
     public ResponseEntity<List<CursoResponseDto>> listarCursos() {
-        return ResponseEntity.ok(cursoService.listarCursos());
+
+        return ResponseEntity.ok(
+                cursoService.listarCursos()
+        );
     }
 
+    // Registrar un curso
     @PostMapping
     public ResponseEntity<CursoResponseDto> guardarCurso(
-            @RequestBody CursoRequestDto cursoDto) {
+            @Valid @RequestBody CursoRequestDto cursoDto) {
 
         CursoResponseDto curso = cursoService.guardarCurso(cursoDto);
 
@@ -37,16 +45,21 @@ public class CursoController {
                 .body(curso);
     }
 
+    // Actualizar un curso
     @PutMapping("/{id}")
     public ResponseEntity<CursoResponseDto> actualizarCurso(
             @PathVariable Long id,
-            @RequestBody CursoRequestDto cursoDto) {
+            @Valid @RequestBody CursoRequestDto cursoDto) {
 
-        CursoResponseDto curso = cursoService.actualizarCurso(id, cursoDto);
+        CursoResponseDto curso = cursoService.actualizarCurso(
+                id,
+                cursoDto
+        );
 
         return ResponseEntity.ok(curso);
     }
 
+    // Eliminar un curso
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarCurso(
             @PathVariable Long id) {

@@ -1,21 +1,42 @@
+
 package com.reinodeloscielos.backend.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
+@Table(name = "docentes")
 public class Docente {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Los nombres son obligatorios")
+    @Size(max = 100, message = "Los nombres no pueden superar los 100 caracteres")
+    @Column(nullable = false, length = 100)
     private String nombres;
+
+    @NotBlank(message = "Los apellidos son obligatorios")
+    @Size(max = 100, message = "Los apellidos no pueden superar los 100 caracteres")
+    @Column(nullable = false, length = 100)
     private String apellidos;
+
+    @NotBlank(message = "El correo electrónico es obligatorio")
+    @Email(message = "El correo electrónico no tiene un formato válido")
+    @Size(max = 150, message = "El correo no puede superar los 150 caracteres")
+    @Column(nullable = false, unique = true, length = 150)
     private String correo;
+
+    @Size(max = 20, message = "El teléfono no puede superar los 20 caracteres")
+    @Column(length = 20)
     private String telefono;
+
+    @NotBlank(message = "La especialidad es obligatoria")
+    @Size(max = 100, message = "La especialidad no puede superar los 100 caracteres")
+    @Column(nullable = false, length = 100)
     private String especialidad;
 
     public Docente() {

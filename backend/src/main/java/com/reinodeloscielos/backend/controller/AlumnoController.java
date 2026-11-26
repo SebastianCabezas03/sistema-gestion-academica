@@ -4,6 +4,8 @@ package com.reinodeloscielos.backend.controller;
 import com.reinodeloscielos.backend.entity.Alumno;
 import com.reinodeloscielos.backend.service.AlumnoService;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,7 +43,7 @@ public class AlumnoController {
     // Registrar alumno
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Alumno crear(@RequestBody Alumno alumno) {
+    public Alumno crear(@Valid @RequestBody Alumno alumno) {
         return alumnoService.crear(alumno);
     }
 
@@ -49,7 +51,8 @@ public class AlumnoController {
     @PutMapping("/{id}")
     public Alumno actualizar(
             @PathVariable Long id,
-            @RequestBody Alumno alumno) {
+            @Valid @RequestBody Alumno alumno) {
+
         return alumnoService.actualizar(id, alumno);
     }
 

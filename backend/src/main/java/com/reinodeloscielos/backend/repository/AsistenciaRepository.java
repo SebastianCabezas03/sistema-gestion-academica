@@ -4,13 +4,12 @@ package com.reinodeloscielos.backend.repository;
 import com.reinodeloscielos.backend.entity.Asistencia;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
-
 import java.time.LocalDate;
 import java.util.List;
 
 public interface AsistenciaRepository
         extends JpaRepository<Asistencia, Long> {
-
+long countByEstado(Asistencia.Estado estado);
     @EntityGraph(attributePaths = {"alumno", "curso"})
     List<Asistencia> findByAlumnoIdOrderByFechaDesc(Long alumnoId);
 

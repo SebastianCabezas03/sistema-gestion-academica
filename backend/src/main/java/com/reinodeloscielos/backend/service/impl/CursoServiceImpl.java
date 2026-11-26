@@ -1,3 +1,4 @@
+
 package com.reinodeloscielos.backend.service.impl;
 
 import com.reinodeloscielos.backend.dto.CursoRequestDto;
@@ -7,8 +8,11 @@ import com.reinodeloscielos.backend.entity.Docente;
 import com.reinodeloscielos.backend.repository.CursoRepository;
 import com.reinodeloscielos.backend.repository.DocenteRepository;
 import com.reinodeloscielos.backend.service.CursoService;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -22,32 +26,33 @@ public class CursoServiceImpl implements CursoService {
     public CursoServiceImpl(
             CursoRepository cursoRepository,
             DocenteRepository docenteRepository) {
+
         this.cursoRepository = cursoRepository;
         this.docenteRepository = docenteRepository;
     }
 
+    // Registrar un curso
     @Override
+    @Transactional
     public CursoResponseDto guardarCurso(CursoRequestDto curso) {
 
-        Curso cursoGuardado = new Curso();
+        validarNombre(curso.getNombre());
 
-        cursoGuardado.setNombreCurso(curso.getNombre());
+        Docente docente = buscarDocente(curso.getIdDocente());
 
-        if (curso.getIdDocente() != null) {
-            Docente docente = docenteRepository.findById(curso.getIdDocente())
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Docente no encontrado"));
+        Curso nuevoCurso = new Curso();
 
-            cursoGuardado.setDocente(docente);
-        }
+        nuevoCurso.setNombreCurso(curso.getNombre().trim());
+        nuevoCurso.setDocente(docente);
 
-        Curso cursoSave = cursoRepository.save(cursoGuardado);
+        Curso cursoGuardado = cursoRepository.save(nuevoCurso);
 
-        return toDto(cursoSave);
+        return toDto(cursoGuardado);
     }
 
+    // Listar todos los cursos
     @Override
+    @Transactional(readOnly = true)
     public List<CursoResponseDto> listarCursos() {
 
         return cursoRepository.findAll()
@@ -56,19 +61,34 @@ public class CursoServiceImpl implements CursoService {
                 .toList();
     }
 
+    // Eliminar un curso
     @Override
+    @Transactional
     public void eliminarCurso(Long id) {
 
-        if (cursoRepository.findById(id).isEmpty()) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Curso no encontrado");
-        }
+        Curso curso = cursoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Curso no encontrado"
+                ));
 
-        cursoRepository.deleteById(id);
+        try {
+
+            cursoRepository.delete(curso);
+            cursoRepository.flush();
+
+        } catch (DataIntegrityViolationException e) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "No se puede eliminar el curso porque tiene matrículas, evaluaciones o asistencias relacionadas"
+            );
+        }
     }
 
+    // Actualizar un curso
     @Override
+    @Transactional
     public CursoResponseDto actualizarCurso(
             Long id,
             CursoRequestDto curso) {
@@ -76,26 +96,57 @@ public class CursoServiceImpl implements CursoService {
         Curso cursoActualizado = cursoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Curso no encontrado"));
+                        "Curso no encontrado"
+                ));
 
-        cursoActualizado.setNombreCurso(curso.getNombre());
+        validarNombre(curso.getNombre());
 
-        if (curso.getIdDocente() != null) {
-            Docente docente = docenteRepository.findById(curso.getIdDocente())
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Docente no encontrado"));
+        Docente docente = buscarDocente(curso.getIdDocente());
 
-            cursoActualizado.setDocente(docente);
-        } else {
-            cursoActualizado.setDocente(null);
-        }
+        cursoActualizado.setNombreCurso(curso.getNombre().trim());
+        cursoActualizado.setDocente(docente);
 
         Curso actualizado = cursoRepository.save(cursoActualizado);
 
         return toDto(actualizado);
     }
 
+    // Buscar docente y comprobar que exista
+    private Docente buscarDocente(Long idDocente) {
+
+        if (idDocente == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Debe asignarse un docente al curso"
+            );
+        }
+
+        return docenteRepository.findById(idDocente)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Docente no encontrado"
+                ));
+    }
+
+    // Validar nombre del curso
+    private void validarNombre(String nombre) {
+
+        if (nombre == null || nombre.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El nombre del curso es obligatorio"
+            );
+        }
+
+        if (nombre.trim().length() > 100) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El nombre del curso no puede superar los 100 caracteres"
+            );
+        }
+    }
+
+    // Convertir entidad a DTO
     private CursoResponseDto toDto(Curso curso) {
 
         CursoResponseDto dto = new CursoResponseDto();

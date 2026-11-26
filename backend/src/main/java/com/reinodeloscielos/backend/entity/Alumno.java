@@ -2,6 +2,7 @@
 package com.reinodeloscielos.backend.entity;
 
 import jakarta.persistence.*;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -15,20 +16,22 @@ public class Alumno {
     private Long id;
 
     @NotBlank(message = "Los nombres son obligatorios")
-    @Size(max = 100)
+    @Size(max = 100, message = "Los nombres no pueden superar los 100 caracteres")
     @Column(nullable = false, length = 100)
     private String nombres;
 
     @NotBlank(message = "Los apellidos son obligatorios")
-    @Size(max = 100)
+    @Size(max = 100, message = "Los apellidos no pueden superar los 100 caracteres")
     @Column(nullable = false, length = 100)
     private String apellidos;
 
+    @NotBlank(message = "El correo es obligatorio")
     @Email(message = "El correo no tiene un formato válido")
-    @Column(unique = true, length = 150)
+    @Size(max = 150, message = "El correo no puede superar los 150 caracteres")
+    @Column(nullable = false, unique = true, length = 150)
     private String correo;
 
-    @Size(max = 20)
+    @Size(max = 20, message = "El teléfono no puede superar los 20 caracteres")
     @Column(length = 20)
     private String telefono;
 

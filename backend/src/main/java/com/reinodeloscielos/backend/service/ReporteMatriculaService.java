@@ -2,9 +2,11 @@
 package com.reinodeloscielos.backend.service;
 
 import com.reinodeloscielos.backend.dto.ReporteMatriculaResponse;
+
 import com.reinodeloscielos.backend.entity.Curso;
 import com.reinodeloscielos.backend.entity.Matricula;
 import com.reinodeloscielos.backend.entity.Usuario;
+
 import com.reinodeloscielos.backend.repository.CursoRepository;
 import com.reinodeloscielos.backend.repository.MatriculaRepository;
 import com.reinodeloscielos.backend.repository.UsuarioRepository;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ReporteMatriculaService {
@@ -34,11 +37,13 @@ public class ReporteMatriculaService {
         this.usuarioRepository = usuarioRepository;
     }
 
+    // Obtener reporte de matrículas de un curso
     @Transactional(readOnly = true)
     public ReporteMatriculaResponse obtenerReporte(
             Long cursoId,
             Authentication authentication) {
 
+        // Verificar autenticación
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
@@ -46,6 +51,7 @@ public class ReporteMatriculaService {
             );
         }
 
+        // Obtener usuario autenticado
         Usuario usuario = usuarioRepository
                 .findByUsername(authentication.getName())
                 .orElseThrow(() -> new ResponseStatusException(
@@ -53,27 +59,32 @@ public class ReporteMatriculaService {
                         "Usuario no encontrado"
                 ));
 
-        if (!"ADMIN".equals(usuario.getRol())
-                && !"DOCENTE".equals(usuario.getRol())) {
+        // Verificar permisos
+        boolean esAdmin = "ADMIN".equals(usuario.getRol());
+        boolean esDocente = "DOCENTE".equals(usuario.getRol());
 
+        if (!esAdmin && !esDocente) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "No tienes permisos para consultar este reporte"
             );
         }
 
+        // Buscar curso
         Curso curso = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Curso no encontrado"
                 ));
 
-        if ("DOCENTE".equals(usuario.getRol())) {
+        // Verificar que el docente tenga asignado el curso
+        if (esDocente) {
 
             if (usuario.getDocente() == null
                     || curso.getDocente() == null
-                    || !curso.getDocente().getId()
-                            .equals(usuario.getDocente().getId())) {
+                    || !Objects.equals(
+                            curso.getDocente().getId(),
+                            usuario.getDocente().getId())) {
 
                 throw new ResponseStatusException(
                         HttpStatus.FORBIDDEN,
@@ -82,9 +93,11 @@ public class ReporteMatriculaService {
             }
         }
 
+        // Obtener matrículas del curso
         List<Matricula> matriculas =
                 matriculaRepository.findByCursoIdOrderByIdDesc(cursoId);
 
+        // Construir detalles del reporte
         List<ReporteMatriculaResponse.DetalleMatricula> detalles =
                 matriculas.stream()
                         .map(matricula ->
@@ -100,6 +113,7 @@ public class ReporteMatriculaService {
                         )
                         .toList();
 
+        // Calcular estadísticas
         int activas = (int) matriculas.stream()
                 .filter(m -> m.getEstado() == Matricula.Estado.ACTIVA)
                 .count();
@@ -108,6 +122,7 @@ public class ReporteMatriculaService {
                 .filter(m -> m.getEstado() == Matricula.Estado.CANCELADA)
                 .count();
 
+        // Retornar reporte
         return new ReporteMatriculaResponse(
                 curso.getId(),
                 curso.getNombreCurso(),

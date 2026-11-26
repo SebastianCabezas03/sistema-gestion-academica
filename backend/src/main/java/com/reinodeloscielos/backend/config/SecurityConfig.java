@@ -35,35 +35,68 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
+
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
+
             .authenticationProvider(authenticationProvider)
+
             .authorizeHttpRequests(auth -> auth
 
+                // Permitir solicitudes OPTIONS para CORS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                // Autenticación
                 .requestMatchers("/api/auth/login").permitAll()
 
+                // Gestión de cuentas
                 .requestMatchers("/api/cuentas/**").hasRole("ADMIN")
 
-                // El alumno puede consultar exclusivamente su propio historial
-                .requestMatchers(HttpMethod.GET, "/api/alumnos/mi-historial")
-                    .hasRole("ALUMNO")
+                // Historial académico del alumno
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/alumnos/mi-historial"
+                ).hasRole("ALUMNO")
 
-                // Los demás endpoints de alumnos son exclusivos del administrador
+                // Gestión de alumnos
                 .requestMatchers("/api/alumnos/**").hasRole("ADMIN")
 
+                // Gestión de docentes
                 .requestMatchers("/api/docentes/**").hasRole("ADMIN")
+
+                // Gestión de matrículas
                 .requestMatchers("/api/matriculas/**").hasRole("ADMIN")
 
+                // Evaluaciones: administrador y docentes
+                .requestMatchers("/api/evaluaciones/**")
+                    .hasAnyRole("ADMIN", "DOCENTE")
+
+                // Consulta de calificaciones propias del alumno
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/calificaciones/mis-calificaciones"
+                ).hasRole("ALUMNO")
+
+                // Gestión de calificaciones
+                .requestMatchers("/api/calificaciones/**")
+                    .hasAnyRole("ADMIN", "DOCENTE")
+
+                // Dashboard y estadísticas: solamente administrador
+                .requestMatchers("/api/dashboard/**")
+                    .hasRole("ADMIN")
+
+                // Consulta de cursos
                 .requestMatchers(HttpMethod.GET, "/api/cursos/**")
                     .hasAnyRole("ADMIN", "DOCENTE", "ALUMNO")
 
+                // Administración de cursos
                 .requestMatchers("/api/cursos/**").hasRole("ADMIN")
 
+                // Cualquier otra ruta requiere autenticación
                 .anyRequest().authenticated()
             )
+
             .addFilterBefore(
                 jwtAuthenticationFilter,
                 UsernamePasswordAuthenticationFilter.class
@@ -72,8 +105,10 @@ public class SecurityConfig {
         return http.build();
     }
 
+    // Configuración CORS para Angular
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(List.of(
@@ -82,7 +117,12 @@ public class SecurityConfig {
         ));
 
         configuration.setAllowedMethods(List.of(
-            "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "PATCH",
+            "OPTIONS"
         ));
 
         configuration.setAllowedHeaders(List.of("*"));
@@ -95,11 +135,13 @@ public class SecurityConfig {
         return source;
     }
 
+    // Codificación de contraseñas
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // Proveedor de autenticación
     @Bean
     public DaoAuthenticationProvider authenticationProvider(
             CustomUserDetailsService userDetailsService,
@@ -113,6 +155,7 @@ public class SecurityConfig {
         return provider;
     }
 
+    // Administrador de autenticación
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration) throws Exception {

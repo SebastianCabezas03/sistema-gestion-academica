@@ -16,5 +16,14 @@ public interface EvaluacionRepository extends JpaRepository<Evaluacion, Long> {
     @EntityGraph(attributePaths = {"curso", "curso.docente"})
     Optional<Evaluacion> findByIdAndCursoId(Long id, Long cursoId);
 
-    boolean existsByCursoIdAndNombreIgnoreCase(Long cursoId, String nombre);
+    boolean existsByCursoIdAndNombreIgnoreCase(
+            Long cursoId,
+            String nombre
+    );
+
+    boolean existsByCursoIdAndNombreIgnoreCaseAndIdNot(
+            Long cursoId,
+            String nombre,
+            Long id
+    );
 }
