@@ -6,16 +6,19 @@ import com.reinodeloscielos.backend.dto.EvaluacionResponse;
 import com.reinodeloscielos.backend.service.EvaluacionService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/evaluaciones")
+@Validated
 public class EvaluacionController {
 
     private final EvaluacionService evaluacionService;
@@ -24,7 +27,7 @@ public class EvaluacionController {
         this.evaluacionService = evaluacionService;
     }
 
-    // Registrar una evaluación
+    // Registrar una evaluación.
     @PostMapping
     public ResponseEntity<EvaluacionResponse> crear(
             @Valid @RequestBody EvaluacionRequest request,
@@ -36,10 +39,10 @@ public class EvaluacionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // Listar evaluaciones de un curso
+    // Listar evaluaciones de un curso.
     @GetMapping("/curso/{cursoId}")
     public ResponseEntity<List<EvaluacionResponse>> listarPorCurso(
-            @PathVariable Long cursoId,
+            @PathVariable @Positive Long cursoId,
             Authentication authentication) {
 
         return ResponseEntity.ok(
@@ -47,10 +50,10 @@ public class EvaluacionController {
         );
     }
 
-    // Actualizar una evaluación
+    // Actualizar una evaluación.
     @PutMapping("/{evaluacionId}")
     public ResponseEntity<EvaluacionResponse> actualizar(
-            @PathVariable Long evaluacionId,
+            @PathVariable @Positive Long evaluacionId,
             @Valid @RequestBody EvaluacionRequest request,
             Authentication authentication) {
 
@@ -63,10 +66,10 @@ public class EvaluacionController {
         );
     }
 
-    // Eliminar una evaluación
+    // Eliminar una evaluación.
     @DeleteMapping("/{evaluacionId}")
     public ResponseEntity<Void> eliminar(
-            @PathVariable Long evaluacionId,
+            @PathVariable @Positive Long evaluacionId,
             Authentication authentication) {
 
         evaluacionService.eliminar(evaluacionId, authentication);

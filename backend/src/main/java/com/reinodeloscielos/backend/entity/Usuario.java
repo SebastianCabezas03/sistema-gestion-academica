@@ -1,6 +1,9 @@
+
 package com.reinodeloscielos.backend.entity;
 
 import jakarta.persistence.*;
+
+import java.util.Locale;
 
 @Entity
 @Table(name = "usuarios")
@@ -19,11 +22,11 @@ public class Usuario {
     @Column(nullable = false, length = 20)
     private String rol;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "alumno_id", unique = true)
     private Alumno alumno;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "docente_id", unique = true)
     private Docente docente;
 
@@ -34,6 +37,19 @@ public class Usuario {
         this.username = username;
         this.password = password;
         this.rol = rol;
+    }
+
+    @PrePersist
+    @PreUpdate
+    private void normalizarDatos() {
+
+        if (username != null) {
+            username = username.trim().toLowerCase(Locale.ROOT);
+        }
+
+        if (rol != null) {
+            rol = rol.trim().toUpperCase(Locale.ROOT);
+        }
     }
 
     public Long getId() {

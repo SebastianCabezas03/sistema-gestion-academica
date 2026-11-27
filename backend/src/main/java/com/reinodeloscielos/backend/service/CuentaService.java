@@ -16,8 +16,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+import java.util.regex.Pattern;
+
 @Service
 public class CuentaService {
+
+    private static final Pattern USERNAME_PATTERN =
+            Pattern.compile("^[a-zA-Z0-9._-]{4,100}$");
 
     private final UsuarioRepository usuarioRepository;
     private final AlumnoRepository alumnoRepository;
@@ -39,9 +46,32 @@ public class CuentaService {
     @Transactional
     public Usuario crear(CrearCuentaRequest request) {
 
-        String username = request.username().trim();
+        if (request == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Los datos de la cuenta son obligatorios"
+            );
+        }
 
-        // Validar nombre de usuario
+        // Validar y normalizar nombre de usuario.
+        if (request.username() == null || request.username().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El nombre de usuario es obligatorio"
+            );
+        }
+
+        String username = request.username()
+                .trim()
+                .toLowerCase(Locale.ROOT);
+
+        if (!USERNAME_PATTERN.matcher(username).matches()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El usuario debe tener entre 4 y 100 caracteres y solo puede contener letras, números, puntos, guiones y guiones bajos"
+            );
+        }
+
         if (usuarioRepository.existsByUsername(username)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -49,8 +79,38 @@ public class CuentaService {
             );
         }
 
-        // Validar rol
-        String rol = request.rol().trim().toUpperCase();
+        // Validar contraseña.
+        if (request.password() == null || request.password().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La contraseña es obligatoria"
+            );
+        }
+
+        String password = request.password();
+
+        int passwordBytes = password.getBytes(
+                StandardCharsets.UTF_8
+        ).length;
+
+        if (password.length() < 8 || passwordBytes > 72) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La contraseña debe tener al menos 8 caracteres y no superar los 72 bytes"
+            );
+        }
+
+        // Validar rol.
+        if (request.rol() == null || request.rol().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El rol es obligatorio"
+            );
+        }
+
+        String rol = request.rol()
+                .trim()
+                .toUpperCase(Locale.ROOT);
 
         if (!rol.equals("ALUMNO") && !rol.equals("DOCENTE")) {
             throw new ResponseStatusException(
@@ -61,34 +121,35 @@ public class CuentaService {
 
         boolean esAlumno = rol.equals("ALUMNO");
 
-        // Validar asociaciones
+        // Validar asociación según el rol.
         if (esAlumno &&
-                (request.alumnoId() == null || request.docenteId() != null)) {
+                (request.alumnoId() == null ||
+                 request.alumnoId() <= 0 ||
+                 request.docenteId() != null)) {
 
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Debes seleccionar un alumno para esta cuenta"
+                    "Debes seleccionar un alumno válido para esta cuenta"
             );
         }
 
         if (!esAlumno &&
-                (request.docenteId() == null || request.alumnoId() != null)) {
+                (request.docenteId() == null ||
+                 request.docenteId() <= 0 ||
+                 request.alumnoId() != null)) {
 
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Debes seleccionar un docente para esta cuenta"
+                    "Debes seleccionar un docente válido para esta cuenta"
             );
         }
 
-        // Crear usuario
         Usuario usuario = new Usuario();
 
         usuario.setUsername(username);
-        usuario.setPassword(
-                passwordEncoder.encode(request.password())
-        );
         usuario.setRol(rol);
 
+        // Asociar la cuenta con su alumno o docente.
         if (esAlumno) {
 
             Alumno alumno = alumnoRepository
@@ -98,9 +159,7 @@ public class CuentaService {
                             "Alumno no encontrado"
                     ));
 
-            // Comprobar si el alumno ya tiene una cuenta
             if (usuarioRepository.existsByAlumnoId(alumno.getId())) {
-
                 throw new ResponseStatusException(
                         HttpStatus.CONFLICT,
                         "Este alumno ya tiene una cuenta"
@@ -118,9 +177,7 @@ public class CuentaService {
                             "Docente no encontrado"
                     ));
 
-            // Comprobar si el docente ya tiene una cuenta
             if (usuarioRepository.existsByDocenteId(docente.getId())) {
-
                 throw new ResponseStatusException(
                         HttpStatus.CONFLICT,
                         "Este docente ya tiene una cuenta"
@@ -129,6 +186,9 @@ public class CuentaService {
 
             usuario.setDocente(docente);
         }
+
+        // Cifrar contraseña antes de guardar.
+        usuario.setPassword(passwordEncoder.encode(password));
 
         return usuarioRepository.save(usuario);
     }

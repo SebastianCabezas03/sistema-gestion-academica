@@ -1,6 +1,10 @@
+
 package com.reinodeloscielos.backend.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+
 import java.time.LocalDate;
 
 @Entity
@@ -25,17 +29,22 @@ public class Asistencia {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull(message = "El alumno es obligatorio")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "alumno_id", nullable = false)
     private Alumno alumno;
 
+    @NotNull(message = "El curso es obligatorio")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "curso_id", nullable = false)
     private Curso curso;
 
+    @NotNull(message = "La fecha de asistencia es obligatoria")
+    @PastOrPresent(message = "La fecha de asistencia no puede ser futura")
     @Column(nullable = false)
     private LocalDate fecha;
 
+    @NotNull(message = "El estado de asistencia es obligatorio")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 15)
     private Estado estado;

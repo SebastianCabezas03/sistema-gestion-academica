@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 @Service
 public class ReporteAsistenciaService {
@@ -45,6 +47,7 @@ public class ReporteAsistenciaService {
             Long cursoId,
             Authentication authentication) {
 
+        // Verificar autenticación.
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
@@ -52,6 +55,17 @@ public class ReporteAsistenciaService {
             );
         }
 
+        // Validar los identificadores recibidos.
+        if (alumnoId == null || alumnoId <= 0
+                || cursoId == null || cursoId <= 0) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Los identificadores del alumno y del curso deben ser válidos"
+            );
+        }
+
+        // Obtener el usuario autenticado.
         Usuario usuario = usuarioRepository
                 .findByUsername(authentication.getName())
                 .orElseThrow(() -> new ResponseStatusException(
@@ -59,33 +73,41 @@ public class ReporteAsistenciaService {
                         "Usuario no encontrado"
                 ));
 
-        if (!"ADMIN".equals(usuario.getRol())
-                && !"DOCENTE".equals(usuario.getRol())) {
+        String rol = usuario.getRol() == null
+                ? ""
+                : usuario.getRol().trim().toUpperCase(Locale.ROOT);
 
+        // Solo ADMIN y DOCENTE pueden consultar este reporte.
+        if (!"ADMIN".equals(rol) && !"DOCENTE".equals(rol)) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "No tienes permisos para consultar este reporte"
             );
         }
 
+        // Buscar al alumno.
         Alumno alumno = alumnoRepository.findById(alumnoId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Alumno no encontrado"
                 ));
 
+        // Buscar el curso.
         Curso curso = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Curso no encontrado"
                 ));
 
-        if ("DOCENTE".equals(usuario.getRol())) {
+        // Verificar que el docente tenga asignado el curso.
+        if ("DOCENTE".equals(rol)) {
 
             if (usuario.getDocente() == null
                     || curso.getDocente() == null
-                    || !curso.getDocente().getId()
-                            .equals(usuario.getDocente().getId())) {
+                    || !Objects.equals(
+                            curso.getDocente().getId(),
+                            usuario.getDocente().getId()
+                    )) {
 
                 throw new ResponseStatusException(
                         HttpStatus.FORBIDDEN,
@@ -94,22 +116,27 @@ public class ReporteAsistenciaService {
             }
         }
 
+        // Obtener los registros de asistencia del alumno en el curso.
         List<Asistencia> registros = asistenciaRepository
                 .findByAlumnoIdAndCursoIdOrderByFechaDesc(
                         alumnoId,
                         cursoId
                 );
 
+        // Calcular el total de registros.
         long total = registros.size();
 
+        // Contar asistencias.
         long asistencias = registros.stream()
                 .filter(a -> a.getEstado() == Asistencia.Estado.ASISTIO)
                 .count();
 
+        // Contar faltas.
         long faltas = registros.stream()
                 .filter(a -> a.getEstado() == Asistencia.Estado.FALTA)
                 .count();
 
+        // Contar tardanzas.
         long tardanzas = registros.stream()
                 .filter(a -> a.getEstado() == Asistencia.Estado.TARDANZA)
                 .count();
@@ -121,6 +148,7 @@ public class ReporteAsistenciaService {
                         ((asistencias + tardanzas) * 100.0 / total) * 100.0
                 ) / 100.0;
 
+        // Construir y devolver el resumen.
         return new ResumenAsistenciaResponse(
                 alumno.getId(),
                 alumno.getNombres() + " " + alumno.getApellidos(),

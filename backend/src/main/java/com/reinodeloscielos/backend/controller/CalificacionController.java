@@ -7,16 +7,19 @@ import com.reinodeloscielos.backend.dto.CalificacionResponse;
 import com.reinodeloscielos.backend.service.CalificacionService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/calificaciones")
+@Validated
 public class CalificacionController {
 
     private final CalificacionService calificacionService;
@@ -26,7 +29,7 @@ public class CalificacionController {
         this.calificacionService = calificacionService;
     }
 
-    // Registrar una calificación
+    // Registrar una calificación.
     @PostMapping
     public ResponseEntity<CalificacionResponse> registrar(
             @Valid @RequestBody CalificacionRequest request,
@@ -40,10 +43,10 @@ public class CalificacionController {
                 .body(response);
     }
 
-    // Listar calificaciones de una evaluación
+    // Listar calificaciones de una evaluación.
     @GetMapping("/evaluacion/{evaluacionId}")
     public ResponseEntity<List<CalificacionResponse>> listarPorEvaluacion(
-            @PathVariable Long evaluacionId,
+            @PathVariable @Positive Long evaluacionId,
             Authentication authentication) {
 
         return ResponseEntity.ok(
@@ -54,10 +57,10 @@ public class CalificacionController {
         );
     }
 
-    // Actualizar una calificación
+    // Actualizar una calificación.
     @PutMapping("/{calificacionId}")
     public ResponseEntity<CalificacionResponse> actualizar(
-            @PathVariable Long calificacionId,
+            @PathVariable @Positive Long calificacionId,
             @Valid @RequestBody CalificacionNotaRequest request,
             Authentication authentication) {
 
@@ -70,10 +73,10 @@ public class CalificacionController {
         );
     }
 
-    // Eliminar una calificación
+    // Eliminar una calificación.
     @DeleteMapping("/{calificacionId}")
     public ResponseEntity<Void> eliminar(
-            @PathVariable Long calificacionId,
+            @PathVariable @Positive Long calificacionId,
             Authentication authentication) {
 
         calificacionService.eliminar(
@@ -84,7 +87,7 @@ public class CalificacionController {
         return ResponseEntity.noContent().build();
     }
 
-    // Consultar calificaciones del alumno autenticado
+    // Consultar calificaciones del alumno autenticado.
     @GetMapping("/mis-calificaciones")
     public ResponseEntity<List<CalificacionResponse>> listarMisCalificaciones(
             Authentication authentication) {

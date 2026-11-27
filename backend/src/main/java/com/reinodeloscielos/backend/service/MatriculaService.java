@@ -40,7 +40,7 @@ public class MatriculaService {
         this.cursos = cursos;
     }
 
-    // Listar todas las matrículas
+    // Listar todas las matrículas.
     @Transactional(readOnly = true)
     public List<MatriculaResponseDto> listar() {
 
@@ -50,13 +50,33 @@ public class MatriculaService {
                 .toList();
     }
 
-    // Registrar uno o varios cursos para un alumno
+    // Registrar uno o varios cursos para un alumno.
     public List<MatriculaResponseDto> registrar(MatriculaRequestDto dto) {
+
+        if (dto == null
+                || dto.alumnoId() == null
+                || dto.alumnoId() <= 0
+                || dto.cursosIds() == null
+                || dto.cursosIds().isEmpty()
+                || dto.fecha() == null) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Los datos de matrícula son obligatorios"
+            );
+        }
 
         Alumno alumno = alumno(dto.alumnoId());
 
-        // Evitar cursos repetidos dentro de la misma solicitud
+        // Evitar cursos repetidos en la solicitud.
         Set<Long> ids = new LinkedHashSet<>(dto.cursosIds());
+
+        if (ids.contains(null) || ids.stream().anyMatch(id -> id <= 0)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Los IDs de los cursos deben ser válidos"
+            );
+        }
 
         if (ids.size() != dto.cursosIds().size()) {
             throw new ResponseStatusException(
@@ -65,54 +85,80 @@ public class MatriculaService {
             );
         }
 
-        // Verificar que todos los cursos existan
+        // Verificar que todos los cursos existan.
         List<Curso> seleccionados = ids.stream()
                 .map(this::curso)
                 .toList();
 
-        // Comprobar que el alumno no tenga matrículas previas
-        for (Curso curso : seleccionados) {
-
-            if (matriculas.existsByAlumnoIdAndCursoId(
-                    alumno.getId(), curso.getId())) {
-
-                throw duplicada();
-            }
-        }
-
-        // Preparar las matrículas
+        // Preparar las matrículas.
         List<Matricula> nuevas = seleccionados.stream()
                 .map(curso -> {
-                    Matricula matricula = new Matricula();
 
+                    Matricula existente = matriculas
+                            .findByAlumnoIdAndCursoId(
+                                    alumno.getId(),
+                                    curso.getId()
+                            )
+                            .orElse(null);
+
+                    if (existente != null) {
+
+                        if (existente.getEstado() == Matricula.Estado.ACTIVA) {
+                            throw duplicada();
+                        }
+
+                        // Reactivar matrícula cancelada.
+                        existente.setEstado(Matricula.Estado.ACTIVA);
+                        existente.setFecha(dto.fecha());
+
+                        return existente;
+                    }
+
+                    Matricula matricula = new Matricula();
                     matricula.setAlumno(alumno);
                     matricula.setCurso(curso);
                     matricula.setFecha(dto.fecha());
+                    matricula.setEstado(Matricula.Estado.ACTIVA);
 
                     return matricula;
                 })
                 .toList();
 
-        // Guardar todas las matrículas en una transacción
         return matriculas.saveAllAndFlush(nuevas)
                 .stream()
                 .map(this::toDto)
                 .toList();
     }
 
-    // Actualizar una matrícula existente
+    // Actualizar una matrícula existente.
     public MatriculaResponseDto actualizar(
             Long id,
             MatriculaUpdateDto dto) {
+
+        if (id == null || id <= 0 || dto == null
+                || dto.alumnoId() == null
+                || dto.alumnoId() <= 0
+                || dto.cursoId() == null
+                || dto.cursoId() <= 0
+                || dto.fecha() == null
+                || dto.estado() == null) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Los datos de actualización no son válidos"
+            );
+        }
 
         Matricula matricula = buscar(id);
 
         Alumno alumno = alumno(dto.alumnoId());
         Curso curso = curso(dto.cursoId());
 
-        // Evitar duplicados excluyendo la matrícula actual
+        // Evitar duplicados excluyendo la matrícula actual.
         if (matriculas.existsByAlumnoIdAndCursoIdAndIdNot(
-                dto.alumnoId(), dto.cursoId(), id)) {
+                alumno.getId(),
+                curso.getId(),
+                id)) {
 
             throw duplicada();
         }
@@ -125,7 +171,7 @@ public class MatriculaService {
         return toDto(matriculas.saveAndFlush(matricula));
     }
 
-    // Cancelar una matrícula
+    // Cancelar una matrícula.
     public MatriculaResponseDto cancelar(Long id) {
 
         Matricula matricula = buscar(id);
@@ -135,28 +181,35 @@ public class MatriculaService {
         return toDto(matriculas.saveAndFlush(matricula));
     }
 
-    // Buscar una matrícula por su identificador
+    // Buscar una matrícula por su identificador.
     private Matricula buscar(Long id) {
+
+        if (id == null || id <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El ID de matrícula no es válido"
+            );
+        }
 
         return matriculas.findById(id)
                 .orElseThrow(() -> noEncontrado("Matrícula"));
     }
 
-    // Buscar un alumno por su identificador
+    // Buscar un alumno por su identificador.
     private Alumno alumno(Long id) {
 
         return alumnos.findById(id)
                 .orElseThrow(() -> noEncontrado("Alumno"));
     }
 
-    // Buscar un curso por su identificador
+    // Buscar un curso por su identificador.
     private Curso curso(Long id) {
 
         return cursos.findById(id)
                 .orElseThrow(() -> noEncontrado("Curso"));
     }
 
-    // Excepción cuando un recurso no existe
+    // Excepción cuando un recurso no existe.
     private ResponseStatusException noEncontrado(String recurso) {
 
         return new ResponseStatusException(
@@ -165,17 +218,16 @@ public class MatriculaService {
         );
     }
 
-    // Excepción cuando existe una matrícula duplicada
+    // Excepción cuando existe una matrícula duplicada.
     private ResponseStatusException duplicada() {
 
         return new ResponseStatusException(
                 HttpStatus.CONFLICT,
-                "El alumno ya tiene una matrícula en uno de los cursos. "
-                + "Si está cancelada, edítala para reactivarla."
+                "El alumno ya tiene una matrícula activa en este curso."
         );
     }
 
-    // Convertir una entidad Matricula en su DTO de respuesta
+    // Convertir una entidad Matricula en su DTO de respuesta.
     private MatriculaResponseDto toDto(Matricula matricula) {
 
         return new MatriculaResponseDto(
@@ -190,3 +242,4 @@ public class MatriculaService {
         );
     }
 }
+

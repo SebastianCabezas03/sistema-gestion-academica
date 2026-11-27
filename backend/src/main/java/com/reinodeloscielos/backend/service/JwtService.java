@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.Locale;
 
 @Service
 public class JwtService {
@@ -54,6 +55,18 @@ public class JwtService {
      */
     public String generarToken(String username, String rol) {
 
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException(
+                    "El nombre de usuario es obligatorio para generar el token"
+            );
+        }
+
+        if (rol == null || rol.isBlank()) {
+            throw new IllegalArgumentException(
+                    "El rol es obligatorio para generar el token"
+            );
+        }
+
         Date ahora = new Date();
 
         Date expiracion = new Date(
@@ -61,8 +74,8 @@ public class JwtService {
         );
 
         return Jwts.builder()
-                .subject(username)
-                .claim("rol", rol)
+                .subject(username.trim())
+                .claim("rol", rol.trim().toUpperCase(Locale.ROOT))
                 .issuedAt(ahora)
                 .expiration(expiracion)
                 .signWith(signingKey)
@@ -73,6 +86,12 @@ public class JwtService {
      * Valida la firma y la fecha de expiración del token.
      */
     public Claims validarToken(String token) {
+
+        if (token == null || token.isBlank()) {
+            throw new IllegalArgumentException(
+                    "El token JWT no puede estar vacío"
+            );
+        }
 
         return Jwts.parser()
                 .verifyWith(signingKey)
