@@ -8,8 +8,10 @@ import com.reinodeloscielos.backend.dto.MatriculaUpdateDto;
 import com.reinodeloscielos.backend.service.MatriculaService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/matriculas")
 @CrossOrigin(origins = "http://localhost:4200")
+@Validated
 public class MatriculaController {
 
     private final MatriculaService service;
@@ -25,13 +28,13 @@ public class MatriculaController {
         this.service = service;
     }
 
-    // Listar todas las matrículas
+    // Listar todas las matrículas.
     @GetMapping
     public List<MatriculaResponseDto> listar() {
         return service.listar();
     }
 
-    // Registrar matrículas
+    // Registrar matrículas.
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public List<MatriculaResponseDto> registrar(
@@ -40,18 +43,19 @@ public class MatriculaController {
         return service.registrar(dto);
     }
 
-    // Actualizar una matrícula
+    // Actualizar una matrícula.
     @PutMapping("/{id}")
     public MatriculaResponseDto actualizar(
-            @PathVariable Long id,
+            @PathVariable @Positive(message = "El ID debe ser positivo") Long id,
             @Valid @RequestBody MatriculaUpdateDto dto) {
 
         return service.actualizar(id, dto);
     }
 
-    // Cancelar una matrícula
+    // Cancelar una matrícula.
     @PatchMapping("/{id}/cancelar")
-    public MatriculaResponseDto cancelar(@PathVariable Long id) {
+    public MatriculaResponseDto cancelar(
+            @PathVariable @Positive(message = "El ID debe ser positivo") Long id) {
 
         return service.cancelar(id);
     }

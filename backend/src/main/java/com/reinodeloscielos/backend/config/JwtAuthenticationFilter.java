@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Locale;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -48,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // Si no existe el encabezado Bearer, continúa con la cadena.
         if (authorization == null ||
-                !authorization.startsWith("Bearer ")) {
+                !authorization.regionMatches(true, 0, "Bearer ", 0, 7)) {
 
             filterChain.doFilter(request, response);
             return;
@@ -67,20 +69,42 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Claims claims = jwtService.validarToken(token);
 
             String username = claims.getSubject();
+            String rolToken = claims.get("rol", String.class);
 
-            if (username == null || username.isBlank()) {
+            if (username == null || username.isBlank() ||
+                    rolToken == null || rolToken.isBlank()) {
+
+                enviarUnauthorized(response);
+                return;
+            }
+
+            // Recuperar los datos y permisos actuales del usuario.
+            UserDetails userDetails =
+                    userDetailsService.loadUserByUsername(
+                            username.trim().toLowerCase(Locale.ROOT)
+                    );
+
+            // Comprobar que el rol del token coincida con el rol actual.
+            String autoridadEsperada =
+                    "ROLE_" + rolToken.trim().toUpperCase(Locale.ROOT);
+
+            boolean rolValido = userDetails.getAuthorities()
+                    .stream()
+                    .anyMatch(authority ->
+                            authority.getAuthority().equals(autoridadEsperada)
+                    );
+
+            if (!rolValido) {
                 enviarUnauthorized(response);
                 return;
             }
 
             // Evitar reemplazar una autenticación existente.
-            if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            Authentication autenticacionActual =
+                    SecurityContextHolder.getContext().getAuthentication();
 
-                // Recuperar los datos y permisos actuales del usuario.
-                UserDetails userDetails =
-                        userDetailsService.loadUserByUsername(username);
+            if (autenticacionActual == null) {
 
-                // Crear objeto de autenticación.
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
@@ -101,9 +125,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (JwtException |
                  IllegalArgumentException |
                  UsernameNotFoundException e) {
-
-            // Token inválido, expirado o usuario inexistente.
-            SecurityContextHolder.clearContext();
 
             enviarUnauthorized(response);
             return;

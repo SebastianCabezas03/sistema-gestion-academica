@@ -4,16 +4,21 @@ package com.reinodeloscielos.backend.controller;
 import com.reinodeloscielos.backend.dto.ReporteCursoAsistenciaResponse;
 import com.reinodeloscielos.backend.dto.ReporteCursoPeriodoResponse;
 import com.reinodeloscielos.backend.dto.ResumenAsistenciaResponse;
+
 import com.reinodeloscielos.backend.service.ReporteAsistenciaService;
 import com.reinodeloscielos.backend.service.ReporteCursoAsistenciaService;
 
+import jakarta.validation.constraints.Positive;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
 @RestController
+@Validated
 @RequestMapping("/api/reportes/asistencias")
 public class ReporteAsistenciaController {
 
@@ -28,10 +33,17 @@ public class ReporteAsistenciaController {
         this.reporteCursoAsistenciaService = reporteCursoAsistenciaService;
     }
 
+    // Obtener el resumen de asistencia de un alumno en un curso.
     @GetMapping("/alumno/{alumnoId}/curso/{cursoId}")
     public ResumenAsistenciaResponse obtenerResumenAlumno(
-            @PathVariable Long alumnoId,
-            @PathVariable Long cursoId,
+            @PathVariable
+            @Positive(message = "El ID del alumno debe ser positivo")
+            Long alumnoId,
+
+            @PathVariable
+            @Positive(message = "El ID del curso debe ser positivo")
+            Long cursoId,
+
             Authentication authentication) {
 
         return reporteAsistenciaService.obtenerResumen(
@@ -41,9 +53,13 @@ public class ReporteAsistenciaController {
         );
     }
 
+    // Obtener el reporte general de asistencia de un curso.
     @GetMapping("/curso/{cursoId}")
     public ReporteCursoAsistenciaResponse obtenerReporteCurso(
-            @PathVariable Long cursoId,
+            @PathVariable
+            @Positive(message = "El ID del curso debe ser positivo")
+            Long cursoId,
+
             Authentication authentication) {
 
         return reporteCursoAsistenciaService.obtenerReporte(
@@ -52,15 +68,21 @@ public class ReporteAsistenciaController {
         );
     }
 
+    // Obtener el reporte de asistencia de un curso por período.
     @GetMapping("/curso/{cursoId}/periodo")
     public ReporteCursoPeriodoResponse obtenerReportePorPeriodo(
-            @PathVariable Long cursoId,
+            @PathVariable
+            @Positive(message = "El ID del curso debe ser positivo")
+            Long cursoId,
+
             @RequestParam
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate fechaInicio,
+
             @RequestParam
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate fechaFin,
+
             Authentication authentication) {
 
         return reporteCursoAsistenciaService.obtenerReportePorPeriodo(

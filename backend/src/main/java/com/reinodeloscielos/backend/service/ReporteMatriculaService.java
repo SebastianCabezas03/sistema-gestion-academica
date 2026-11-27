@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
+@Transactional(readOnly = true)
 public class ReporteMatriculaService {
 
     private final MatriculaRepository matriculaRepository;
@@ -37,13 +38,20 @@ public class ReporteMatriculaService {
         this.usuarioRepository = usuarioRepository;
     }
 
-    // Obtener reporte de matrículas de un curso
-    @Transactional(readOnly = true)
+    // Obtener reporte de matrículas de un curso.
     public ReporteMatriculaResponse obtenerReporte(
             Long cursoId,
             Authentication authentication) {
 
-        // Verificar autenticación
+        // Validar identificador.
+        if (cursoId == null || cursoId <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El ID del curso no es válido"
+            );
+        }
+
+        // Verificar autenticación.
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
@@ -51,7 +59,7 @@ public class ReporteMatriculaService {
             );
         }
 
-        // Obtener usuario autenticado
+        // Obtener usuario autenticado.
         Usuario usuario = usuarioRepository
                 .findByUsername(authentication.getName())
                 .orElseThrow(() -> new ResponseStatusException(
@@ -59,7 +67,7 @@ public class ReporteMatriculaService {
                         "Usuario no encontrado"
                 ));
 
-        // Verificar permisos
+        // Verificar permisos.
         boolean esAdmin = "ADMIN".equals(usuario.getRol());
         boolean esDocente = "DOCENTE".equals(usuario.getRol());
 
@@ -70,14 +78,14 @@ public class ReporteMatriculaService {
             );
         }
 
-        // Buscar curso
+        // Buscar curso.
         Curso curso = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Curso no encontrado"
                 ));
 
-        // Verificar que el docente tenga asignado el curso
+        // Verificar que el docente tenga asignado el curso.
         if (esDocente) {
 
             if (usuario.getDocente() == null
@@ -93,11 +101,11 @@ public class ReporteMatriculaService {
             }
         }
 
-        // Obtener matrículas del curso
+        // Obtener todas las matrículas del curso.
         List<Matricula> matriculas =
                 matriculaRepository.findByCursoIdOrderByIdDesc(cursoId);
 
-        // Construir detalles del reporte
+        // Construir detalles del reporte.
         List<ReporteMatriculaResponse.DetalleMatricula> detalles =
                 matriculas.stream()
                         .map(matricula ->
@@ -113,7 +121,7 @@ public class ReporteMatriculaService {
                         )
                         .toList();
 
-        // Calcular estadísticas
+        // Calcular estadísticas.
         int activas = (int) matriculas.stream()
                 .filter(m -> m.getEstado() == Matricula.Estado.ACTIVA)
                 .count();
@@ -122,7 +130,7 @@ public class ReporteMatriculaService {
                 .filter(m -> m.getEstado() == Matricula.Estado.CANCELADA)
                 .count();
 
-        // Retornar reporte
+        // Retornar reporte.
         return new ReporteMatriculaResponse(
                 curso.getId(),
                 curso.getNombreCurso(),
@@ -133,3 +141,4 @@ public class ReporteMatriculaService {
         );
     }
 }
+

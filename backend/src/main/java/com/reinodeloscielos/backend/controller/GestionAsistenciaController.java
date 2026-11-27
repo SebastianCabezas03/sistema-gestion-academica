@@ -5,11 +5,17 @@ import com.reinodeloscielos.backend.dto.AsistenciaResponse;
 import com.reinodeloscielos.backend.entity.Asistencia;
 import com.reinodeloscielos.backend.service.GestionAsistenciaService;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@Validated
 @RequestMapping("/api/asistencias")
 public class GestionAsistenciaController {
 
@@ -21,10 +27,16 @@ public class GestionAsistenciaController {
         this.gestionAsistenciaService = gestionAsistenciaService;
     }
 
+    // Actualizar el estado de una asistencia.
     @PutMapping("/{asistenciaId}")
     public AsistenciaResponse actualizar(
-            @PathVariable Long asistenciaId,
-            @RequestBody ActualizarAsistenciaRequest request,
+
+            @PathVariable
+            @Positive(message = "El ID de asistencia debe ser positivo")
+            Long asistenciaId,
+
+            @Valid @RequestBody ActualizarAsistenciaRequest request,
+
             Authentication authentication) {
 
         Asistencia asistencia = gestionAsistenciaService.actualizar(
@@ -36,9 +48,14 @@ public class GestionAsistenciaController {
         return convertir(asistencia);
     }
 
+    // Eliminar un registro de asistencia.
     @DeleteMapping("/{asistenciaId}")
     public ResponseEntity<Void> eliminar(
-            @PathVariable Long asistenciaId,
+
+            @PathVariable
+            @Positive(message = "El ID de asistencia debe ser positivo")
+            Long asistenciaId,
+
             Authentication authentication) {
 
         gestionAsistenciaService.eliminar(
@@ -49,6 +66,7 @@ public class GestionAsistenciaController {
         return ResponseEntity.noContent().build();
     }
 
+    // Convertir la entidad en un DTO de respuesta.
     private AsistenciaResponse convertir(Asistencia asistencia) {
 
         return new AsistenciaResponse(
@@ -63,7 +81,11 @@ public class GestionAsistenciaController {
         );
     }
 
+    // DTO para recibir la actualización del estado.
     public record ActualizarAsistenciaRequest(
+
+            @NotNull(message = "Debes indicar el nuevo estado de asistencia")
             Asistencia.Estado estado
+
     ) {}
 }

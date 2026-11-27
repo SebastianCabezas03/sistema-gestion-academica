@@ -44,6 +44,7 @@ public class Matricula {
     @Column(nullable = false)
     private LocalDate fecha;
 
+    @NotNull(message = "El estado de la matrícula es obligatorio")
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, length = 10)

@@ -44,6 +44,13 @@ public class GestionAsistenciaService {
 
     private Asistencia obtenerAsistencia(Long asistenciaId) {
 
+        if (asistenciaId == null || asistenciaId <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El ID de asistencia no es válido"
+            );
+        }
+
         return asistenciaRepository.findById(asistenciaId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -55,10 +62,13 @@ public class GestionAsistenciaService {
             Usuario usuario,
             Asistencia asistencia) {
 
+        // El administrador puede gestionar cualquier asistencia.
         if ("ADMIN".equals(usuario.getRol())) {
             return;
         }
 
+        // El docente solamente puede gestionar asistencias
+        // de los cursos que tiene asignados.
         if (!"DOCENTE".equals(usuario.getRol())
                 || usuario.getDocente() == null
                 || asistencia.getCurso().getDocente() == null

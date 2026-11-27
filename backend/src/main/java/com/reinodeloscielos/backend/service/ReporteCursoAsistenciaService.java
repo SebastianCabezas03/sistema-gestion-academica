@@ -4,10 +4,12 @@ package com.reinodeloscielos.backend.service;
 import com.reinodeloscielos.backend.dto.ReporteCursoAsistenciaResponse;
 import com.reinodeloscielos.backend.dto.ReporteCursoPeriodoResponse;
 import com.reinodeloscielos.backend.dto.ResumenAsistenciaResponse;
+
 import com.reinodeloscielos.backend.entity.Asistencia;
 import com.reinodeloscielos.backend.entity.Curso;
 import com.reinodeloscielos.backend.entity.Matricula;
 import com.reinodeloscielos.backend.entity.Usuario;
+
 import com.reinodeloscielos.backend.repository.AsistenciaRepository;
 import com.reinodeloscielos.backend.repository.CursoRepository;
 import com.reinodeloscielos.backend.repository.MatriculaRepository;
@@ -21,6 +23,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class ReporteCursoAsistenciaService {
@@ -42,12 +48,14 @@ public class ReporteCursoAsistenciaService {
         this.usuarioRepository = usuarioRepository;
     }
 
+    // Generar reporte general de asistencia de un curso.
     @Transactional(readOnly = true)
     public ReporteCursoAsistenciaResponse obtenerReporte(
             Long cursoId,
             Authentication authentication) {
 
         Usuario usuario = validarUsuario(authentication);
+
         Curso curso = obtenerCursoAutorizado(cursoId, usuario);
 
         List<Matricula> matriculas =
@@ -56,15 +64,35 @@ public class ReporteCursoAsistenciaService {
                         Matricula.Estado.ACTIVA
                 );
 
+        // Obtener todas las asistencias del curso en una consulta.
+        List<Asistencia> registrosCurso =
+                asistenciaRepository.findByCursoIdOrderByFechaDesc(cursoId);
+
+        // Agrupar las asistencias por ID de alumno.
+        Map<Long, List<Asistencia>> asistenciasPorAlumno =
+                registrosCurso.stream()
+                        .collect(Collectors.groupingBy(
+                                asistencia -> asistencia.getAlumno().getId()
+                        ));
+
+        // Generar un resumen para cada alumno matriculado.
         List<ResumenAsistenciaResponse> reportes = matriculas.stream()
-                .map(matricula -> generarResumen(
-                        matricula,
-                        curso,
-                        asistenciaRepository.findByAlumnoIdAndCursoIdOrderByFechaDesc(
-                                matricula.getAlumno().getId(),
-                                cursoId
-                        )
-                ))
+                .map(matricula -> {
+
+                    Long alumnoId = matricula.getAlumno().getId();
+
+                    List<Asistencia> registrosAlumno =
+                            asistenciasPorAlumno.getOrDefault(
+                                    alumnoId,
+                                    List.of()
+                            );
+
+                    return generarResumen(
+                            matricula,
+                            curso,
+                            registrosAlumno
+                    );
+                })
                 .toList();
 
         return new ReporteCursoAsistenciaResponse(
@@ -75,6 +103,7 @@ public class ReporteCursoAsistenciaService {
         );
     }
 
+    // Generar reporte de asistencia de un curso por período.
     @Transactional(readOnly = true)
     public ReporteCursoPeriodoResponse obtenerReportePorPeriodo(
             Long cursoId,
@@ -84,19 +113,7 @@ public class ReporteCursoAsistenciaService {
 
         Usuario usuario = validarUsuario(authentication);
 
-        if (fechaInicio == null || fechaFin == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Debes indicar ambas fechas"
-            );
-        }
-
-        if (fechaInicio.isAfter(fechaFin)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "La fecha de inicio no puede ser posterior a la fecha final"
-            );
-        }
+        validarPeriodo(cursoId, fechaInicio, fechaFin);
 
         Curso curso = obtenerCursoAutorizado(cursoId, usuario);
 
@@ -113,15 +130,24 @@ public class ReporteCursoAsistenciaService {
                         fechaFin
                 );
 
+        // Agrupar las asistencias por ID de alumno.
+        Map<Long, List<Asistencia>> asistenciasPorAlumno =
+                registrosPeriodo.stream()
+                        .collect(Collectors.groupingBy(
+                                asistencia -> asistencia.getAlumno().getId()
+                        ));
+
+        // Generar un resumen para cada alumno matriculado.
         List<ResumenAsistenciaResponse> reportes = matriculas.stream()
                 .map(matricula -> {
 
                     Long alumnoId = matricula.getAlumno().getId();
 
-                    List<Asistencia> registrosAlumno = registrosPeriodo.stream()
-                            .filter(asistencia ->
-                                    asistencia.getAlumno().getId().equals(alumnoId))
-                            .toList();
+                    List<Asistencia> registrosAlumno =
+                            asistenciasPorAlumno.getOrDefault(
+                                    alumnoId,
+                                    List.of()
+                            );
 
                     return generarResumen(
                             matricula,
@@ -141,6 +167,7 @@ public class ReporteCursoAsistenciaService {
         );
     }
 
+    // Validar el usuario autenticado y sus permisos.
     private Usuario validarUsuario(Authentication authentication) {
 
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -157,9 +184,11 @@ public class ReporteCursoAsistenciaService {
                         "Usuario no encontrado"
                 ));
 
-        if (!"ADMIN".equals(usuario.getRol())
-                && !"DOCENTE".equals(usuario.getRol())) {
+        String rol = usuario.getRol() == null
+                ? ""
+                : usuario.getRol().trim().toUpperCase(Locale.ROOT);
 
+        if (!"ADMIN".equals(rol) && !"DOCENTE".equals(rol)) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "No tienes permisos para consultar este reporte"
@@ -169,9 +198,45 @@ public class ReporteCursoAsistenciaService {
         return usuario;
     }
 
+    // Validar los datos del período solicitado.
+    private void validarPeriodo(
+            Long cursoId,
+            LocalDate fechaInicio,
+            LocalDate fechaFin) {
+
+        if (cursoId == null || cursoId <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El ID del curso no es válido"
+            );
+        }
+
+        if (fechaInicio == null || fechaFin == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Debes indicar ambas fechas"
+            );
+        }
+
+        if (fechaInicio.isAfter(fechaFin)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La fecha de inicio no puede ser posterior a la fecha final"
+            );
+        }
+    }
+
+    // Obtener el curso y verificar los permisos del usuario.
     private Curso obtenerCursoAutorizado(
             Long cursoId,
             Usuario usuario) {
+
+        if (cursoId == null || cursoId <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El ID del curso no es válido"
+            );
+        }
 
         Curso curso = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -179,12 +244,18 @@ public class ReporteCursoAsistenciaService {
                         "Curso no encontrado"
                 ));
 
-        if ("DOCENTE".equals(usuario.getRol())) {
+        String rol = usuario.getRol() == null
+                ? ""
+                : usuario.getRol().trim().toUpperCase(Locale.ROOT);
+
+        if ("DOCENTE".equals(rol)) {
 
             if (usuario.getDocente() == null
                     || curso.getDocente() == null
-                    || !curso.getDocente().getId()
-                            .equals(usuario.getDocente().getId())) {
+                    || !Objects.equals(
+                            curso.getDocente().getId(),
+                            usuario.getDocente().getId()
+                    )) {
 
                 throw new ResponseStatusException(
                         HttpStatus.FORBIDDEN,
@@ -196,6 +267,7 @@ public class ReporteCursoAsistenciaService {
         return curso;
     }
 
+    // Calcular el resumen de asistencia de un alumno.
     private ResumenAsistenciaResponse generarResumen(
             Matricula matricula,
             Curso curso,
@@ -217,6 +289,7 @@ public class ReporteCursoAsistenciaService {
                 .filter(a -> a.getEstado() == Asistencia.Estado.TARDANZA)
                 .count();
 
+        // Las tardanzas también cuentan como asistencia.
         double porcentaje = total == 0
                 ? 0.0
                 : Math.round(
@@ -236,4 +309,3 @@ public class ReporteCursoAsistenciaService {
         );
     }
 }
-

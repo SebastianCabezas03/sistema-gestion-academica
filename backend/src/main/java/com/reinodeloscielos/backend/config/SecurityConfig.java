@@ -33,65 +33,148 @@ public class SecurityConfig {
             DaoAuthenticationProvider authenticationProvider) throws Exception {
 
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .cors(cors ->
+                cors.configurationSource(corsConfigurationSource())
+            )
+
             .csrf(csrf -> csrf.disable())
 
             .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                session.sessionCreationPolicy(
+                    SessionCreationPolicy.STATELESS
+                )
             )
 
             .authenticationProvider(authenticationProvider)
 
             .authorizeHttpRequests(auth -> auth
 
-                // Permitir solicitudes OPTIONS para CORS
+                // Solicitudes OPTIONS para CORS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // Autenticación
-                .requestMatchers("/api/auth/login").permitAll()
+                // Autenticación pública
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/auth/login"
+                ).permitAll()
 
-                // Gestión de cuentas
-                .requestMatchers("/api/cuentas/**").hasRole("ADMIN")
+                // Gestión de cuentas: ADMIN
+                .requestMatchers("/api/cuentas/**")
+                    .hasRole("ADMIN")
 
-                // Historial académico del alumno
+                // Perfil propio: ADMIN, DOCENTE y ALUMNO
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/perfil/me"
+                ).hasAnyRole("ADMIN", "DOCENTE", "ALUMNO")
+
+                // Historial académico propio: ALUMNO
                 .requestMatchers(
                     HttpMethod.GET,
                     "/api/alumnos/mi-historial"
                 ).hasRole("ALUMNO")
 
-                // Gestión de alumnos
-                .requestMatchers("/api/alumnos/**").hasRole("ADMIN")
+                // Gestión de alumnos: ADMIN
+                .requestMatchers("/api/alumnos/**")
+                    .hasRole("ADMIN")
 
-                // Gestión de docentes
-                .requestMatchers("/api/docentes/**").hasRole("ADMIN")
+                // Gestión de docentes: ADMIN
+                .requestMatchers("/api/docentes/**")
+                    .hasRole("ADMIN")
 
-                // Gestión de matrículas
-                .requestMatchers("/api/matriculas/**").hasRole("ADMIN")
+                // Matrículas: ADMIN
+                .requestMatchers("/api/matriculas/**")
+                    .hasRole("ADMIN")
 
-                // Evaluaciones: administrador y docentes
+                // Evaluaciones: ADMIN y DOCENTE
                 .requestMatchers("/api/evaluaciones/**")
                     .hasAnyRole("ADMIN", "DOCENTE")
 
-                // Consulta de calificaciones propias del alumno
+                // Consulta de calificaciones propias: ALUMNO
                 .requestMatchers(
                     HttpMethod.GET,
                     "/api/calificaciones/mis-calificaciones"
                 ).hasRole("ALUMNO")
 
-                // Gestión de calificaciones
+                // Gestión de calificaciones: ADMIN y DOCENTE
                 .requestMatchers("/api/calificaciones/**")
                     .hasAnyRole("ADMIN", "DOCENTE")
 
-                // Dashboard y estadísticas: solamente administrador
+                // Dashboard: ADMIN
                 .requestMatchers("/api/dashboard/**")
                     .hasRole("ADMIN")
 
+                // Reportes de asistencia: ADMIN y DOCENTE
+                .requestMatchers("/api/reportes/asistencias/**")
+                    .hasAnyRole("ADMIN", "DOCENTE")
+
+                // Reportes de matrículas: ADMIN y DOCENTE
+                .requestMatchers("/api/reportes/matriculas/**")
+                    .hasAnyRole("ADMIN", "DOCENTE")
+
+                // Cursos del alumno: ALUMNO
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/mis-cursos"
+                ).hasRole("ALUMNO")
+
+                // Consultas y gestión de asistencia
+
+                // Asistencia propia: ALUMNO
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/asistencias/mi-asistencia"
+                ).hasRole("ALUMNO")
+
+                // Asistencia de un alumno: ADMIN
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/asistencias/alumno/**"
+                ).hasRole("ADMIN")
+
+                // Todas las asistencias: ADMIN
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/asistencias/admin/**"
+                ).hasRole("ADMIN")
+
+                // Asistencia por curso: ADMIN y DOCENTE
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/asistencias/curso/**"
+                ).hasAnyRole("ADMIN", "DOCENTE")
+
+                // Registrar asistencia: DOCENTE
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/asistencias/registrar",
+                    "/api/asistencias/registrar/lote"
+                ).hasRole("DOCENTE")
+
+                // Actualizar y eliminar asistencia: ADMIN y DOCENTE
+                .requestMatchers(
+                    HttpMethod.PUT,
+                    "/api/asistencias/*"
+                ).hasAnyRole("ADMIN", "DOCENTE")
+
+                .requestMatchers(
+                    HttpMethod.DELETE,
+                    "/api/asistencias/*"
+                ).hasAnyRole("ADMIN", "DOCENTE")
+
+                // Gestión de asistencia docente
+                .requestMatchers("/api/docente/asistencia/**")
+                    .hasRole("DOCENTE")
+
                 // Consulta de cursos
-                .requestMatchers(HttpMethod.GET, "/api/cursos/**")
-                    .hasAnyRole("ADMIN", "DOCENTE", "ALUMNO")
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/cursos/**"
+                ).hasAnyRole("ADMIN", "DOCENTE", "ALUMNO")
 
                 // Administración de cursos
-                .requestMatchers("/api/cursos/**").hasRole("ADMIN")
+                .requestMatchers("/api/cursos/**")
+                    .hasRole("ADMIN")
 
                 // Cualquier otra ruta requiere autenticación
                 .anyRequest().authenticated()

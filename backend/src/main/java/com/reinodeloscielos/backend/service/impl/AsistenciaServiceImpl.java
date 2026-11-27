@@ -1,3 +1,4 @@
+
 package com.reinodeloscielos.backend.service.impl;
 
 import com.reinodeloscielos.backend.dto.AsistenciaLoteRequest;
@@ -114,6 +115,20 @@ public class AsistenciaServiceImpl implements AsistenciaService {
         Usuario usuario = obtenerUsuario(authentication);
         validarRol(usuario, "ADMIN");
 
+        if (alumnoId == null || alumnoId <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "El ID del alumno no es válido"
+            );
+        }
+
+        if (!alumnoRepository.existsById(alumnoId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Alumno no encontrado"
+            );
+        }
+
         return asistenciaRepository
                 .findByAlumnoIdOrderByFechaDesc(alumnoId)
                 .stream()
@@ -153,12 +168,14 @@ public class AsistenciaServiceImpl implements AsistenciaService {
             );
         }
 
-        if (fecha == null) {
+        if (cursoId == null || cursoId <= 0) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "La fecha es obligatoria"
+                    "El ID del curso no es válido"
             );
         }
+
+        validarFechaAsistencia(fecha);
 
         Curso curso = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -167,17 +184,7 @@ public class AsistenciaServiceImpl implements AsistenciaService {
                 ));
 
         if ("DOCENTE".equals(usuario.getRol())) {
-
-            if (usuario.getDocente() == null
-                    || curso.getDocente() == null
-                    || !curso.getDocente().getId()
-                            .equals(usuario.getDocente().getId())) {
-
-                throw new ResponseStatusException(
-                        HttpStatus.FORBIDDEN,
-                        "No tienes asignado este curso"
-                );
-            }
+            validarCursoDocente(curso, usuario);
         }
 
         return asistenciaRepository
@@ -209,14 +216,17 @@ public class AsistenciaServiceImpl implements AsistenciaService {
             );
         }
 
-        if (alumnoId == null || cursoId == null
-                || fecha == null || estado == null) {
+        if (alumnoId == null || alumnoId <= 0
+                || cursoId == null || cursoId <= 0
+                || estado == null) {
 
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Todos los datos de asistencia son obligatorios"
+                    "Los datos de asistencia son obligatorios y deben ser válidos"
             );
         }
+
+        validarFechaAsistencia(fecha);
 
         Curso curso = cursoRepository.findById(cursoId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -268,16 +278,19 @@ public class AsistenciaServiceImpl implements AsistenciaService {
             );
         }
 
-        if (request == null || request.cursoId() == null
-                || request.fecha() == null
+        if (request == null
+                || request.cursoId() == null
+                || request.cursoId() <= 0
                 || request.asistencias() == null
                 || request.asistencias().isEmpty()) {
 
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Debes indicar el curso, la fecha y los alumnos"
+                    "Debes indicar un curso y al menos un alumno"
             );
         }
+
+        validarFechaAsistencia(request.fecha());
 
         Curso curso = cursoRepository.findById(request.cursoId())
                 .orElseThrow(() -> new ResponseStatusException(
@@ -292,12 +305,14 @@ public class AsistenciaServiceImpl implements AsistenciaService {
 
         for (AsistenciaLoteRequest.Detalle detalle : request.asistencias()) {
 
-            if (detalle == null || detalle.alumnoId() == null
+            if (detalle == null
+                    || detalle.alumnoId() == null
+                    || detalle.alumnoId() <= 0
                     || detalle.estado() == null) {
 
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Cada alumno debe tener un ID y un estado de asistencia"
+                        "Cada alumno debe tener un ID válido y un estado de asistencia"
                 );
             }
 
@@ -345,7 +360,8 @@ public class AsistenciaServiceImpl implements AsistenciaService {
 
     private void validarCursoDocente(Curso curso, Usuario usuario) {
 
-        if (curso.getDocente() == null
+        if (usuario.getDocente() == null
+                || curso.getDocente() == null
                 || !curso.getDocente().getId()
                         .equals(usuario.getDocente().getId())) {
 
@@ -369,6 +385,23 @@ public class AsistenciaServiceImpl implements AsistenciaService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "El alumno no tiene una matrícula activa en este curso"
+            );
+        }
+    }
+
+    private void validarFechaAsistencia(LocalDate fecha) {
+
+        if (fecha == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La fecha de asistencia es obligatoria"
+            );
+        }
+
+        if (fecha.isAfter(LocalDate.now())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "No se pueden registrar asistencias con fechas futuras"
             );
         }
     }

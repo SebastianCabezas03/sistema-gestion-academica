@@ -1,5 +1,8 @@
 
+
 package com.reinodeloscielos.backend.controller;
+
+import jakarta.validation.ConstraintViolationException;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -15,7 +18,7 @@ import java.util.Map;
 @RestControllerAdvice(assignableTypes = MatriculaController.class)
 public class MatriculaExceptionHandler {
 
-    // Errores de lógica de negocio
+    // Errores de lógica de negocio.
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, String>> negocio(
             ResponseStatusException ex) {
@@ -29,20 +32,40 @@ public class MatriculaExceptionHandler {
                 .body(Map.of("message", mensaje));
     }
 
-    // Errores de validación de los DTO
+    // Errores de validación de los DTO.
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> validacion(
             MethodArgumentNotValidException ex) {
 
+        String mensaje = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .findFirst()
+                .map(error -> error.getDefaultMessage())
+                .orElse("Los datos enviados no son válidos.");
+
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of(
-                        "message",
-                        "Selecciona un alumno y cursos válidos e indica una fecha que no sea futura."
-                ));
+                .body(Map.of("message", mensaje));
     }
 
-    // Errores de integridad de la base de datos
+    // Errores de validación de parámetros de las rutas.
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, String>> validarParametros(
+            ConstraintViolationException ex) {
+
+        String mensaje = ex.getConstraintViolations()
+                .stream()
+                .findFirst()
+                .map(error -> error.getMessage())
+                .orElse("Los parámetros enviados no son válidos.");
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", mensaje));
+    }
+
+    // Errores de integridad de la base de datos.
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, String>> integridad(
             DataIntegrityViolationException ex) {

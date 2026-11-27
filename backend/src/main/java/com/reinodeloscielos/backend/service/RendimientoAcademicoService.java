@@ -44,13 +44,13 @@ public class RendimientoAcademicoService {
 
         validarAdministrador(authentication);
 
-        // Obtener todas las calificaciones
+        // Obtener todas las calificaciones.
         List<Calificacion> calificaciones =
                 calificacionRepository.findAll();
 
         long totalCalificaciones = calificaciones.size();
 
-        // Calcular promedio general
+        // Calcular promedio general.
         BigDecimal promedioGeneral = BigDecimal.ZERO;
 
         if (!calificaciones.isEmpty()) {
@@ -66,7 +66,7 @@ public class RendimientoAcademicoService {
             );
         }
 
-        // Obtener estadísticas de asistencia
+        // Obtener estadísticas de asistencia.
         long totalAsistencias =
                 asistenciaRepository.countByEstado(
                         Asistencia.Estado.ASISTIO
@@ -85,8 +85,8 @@ public class RendimientoAcademicoService {
         long totalRegistrosAsistencia =
                 totalAsistencias + totalFaltas + totalTardanzas;
 
-        // Calcular porcentaje de asistencia
-        // Las tardanzas también cuentan como asistencia
+        // Calcular porcentaje de asistencia.
+        // Las tardanzas también cuentan como asistencia.
         BigDecimal porcentajeAsistencia = BigDecimal.ZERO;
 
         if (totalRegistrosAsistencia > 0) {
@@ -114,7 +114,7 @@ public class RendimientoAcademicoService {
         );
     }
 
-    // Validar acceso exclusivo del administrador
+    // Validar acceso exclusivo del administrador.
     private void validarAdministrador(Authentication authentication) {
 
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -131,7 +131,7 @@ public class RendimientoAcademicoService {
                         "Usuario no encontrado"
                 ));
 
-        if (!"ADMIN".equals(usuario.getRol())) {
+        if (!"ADMIN".equalsIgnoreCase(usuario.getRol())) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "No tienes permisos para consultar el rendimiento académico"
